@@ -493,10 +493,38 @@ const CoinDetail: React.FC = () => {
               AssetPrice: typedDetails.AssetPrice,
               ContractStatus: typedDetails.ContractStatus,
               AssetId: typedDetails.AssetId,
-              ContractExpiry: typedDetails.ContractExpiry,
+              ContractExpiry: new Date(
+                typedDetails.ContractExpiry
+              ).toLocaleString("en-US", {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false, // Use 24-hour format
+              }),
+              CreatedTime: new Date(typedDetails.CreatedTime).toLocaleString(
+                "en-US",
+                {
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: false, // Use 24-hour format
+                }
+              ),
               TradeId: typedDetails.TradeId,
-              CreatedTime: typedDetails.CreatedTime,
-              ClosingTime: typedDetails.ClosingTime,
+              ClosingTime: typedDetails.ClosingTime
+                ? new Date(typedDetails.ClosingTime).toLocaleString("en-US", {
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: false,
+                  })
+                : "Pending",
               ClosingPrice: typedDetails.ClosingPrice,
               Payout: typedDetails.Payout,
               UserId: typedDetails.UserId,
@@ -548,10 +576,38 @@ const CoinDetail: React.FC = () => {
                 AssetPrice: typedDetails.AssetPrice,
                 ContractStatus: typedDetails.ContractStatus,
                 AssetId: typedDetails.AssetId,
-                ContractExpiry: typedDetails.ContractExpiry,
                 TradeId: typedDetails.TradeId,
-                CreatedTime: typedDetails.CreatedTime,
-                ClosingTime: typedDetails.ClosingTime,
+                ContractExpiry: new Date(
+                  typedDetails.ContractExpiry
+                ).toLocaleString("en-US", {
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: false, // Use 24-hour format
+                }),
+                CreatedTime: new Date(typedDetails.CreatedTime).toLocaleString(
+                  "en-US",
+                  {
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: false, // Use 24-hour format
+                  }
+                ),
+                ClosingTime: typedDetails.ClosingTime
+                  ? new Date(typedDetails.ClosingTime).toLocaleString("en-US", {
+                      year: "numeric",
+                      month: "2-digit",
+                      day: "2-digit",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: false,
+                    })
+                  : "Pending",
                 ClosingPrice: typedDetails.ClosingPrice,
                 Payout: typedDetails.Payout,
                 UserId: typedDetails.UserId,
