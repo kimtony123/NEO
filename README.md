@@ -6,13 +6,13 @@ Here are Steps you can take to successfully test and run it locally
 
 clone the repo in your home directory using the below script
 
-    git clone https://github.com/kimtony123/notus-exchange.git
+    git clone https://github.com/kimtony123/NEO
 
 # Step 2 (Insatlling Dependencies).
 
 Go to the Directory using the code below.
 
-    cd Notus-exchange
+    cd NEO
 
 install the dependencies using the below script
 
