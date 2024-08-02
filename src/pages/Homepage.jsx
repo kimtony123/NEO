@@ -87,7 +87,7 @@ const HomePage = () => {
         </MenuItem>
         <MenuItem position="right" className="homepage-menu-item">
           <Button
-            href="https://github.com/kimtony123/notus-trading-app"
+            href="https://github.com/kimtony123/NEO"
             content="Github"
             icon="github"
             labelPosition="left"

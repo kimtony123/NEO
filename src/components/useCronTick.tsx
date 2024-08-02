@@ -23,7 +23,7 @@ const useCronTick = (process: string) => {
       }
     };
 
-    const intervalId = setInterval(fetchCronTick, 1000000); // Call fetchCronTick every second
+    const intervalId = setInterval(fetchCronTick, 5000); // Call fetchCronTick every second
 
     return () => clearInterval(intervalId); // Cleanup interval on component unmount
   }, [process]);

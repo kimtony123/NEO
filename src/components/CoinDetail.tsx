@@ -825,7 +825,7 @@ const CoinDetail: React.FC = () => {
         </MenuItem>
         <MenuItem position="right">
           <Button
-            href="https://github.com/kimtony123/notus-exchange"
+            href="https://github.com/kimtony123/NEO"
             content="Github."
             icon="github"
             labelPosition="left"
