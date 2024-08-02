@@ -328,7 +328,7 @@ const CoinDetail: React.FC = () => {
           { name: "ContractStatus", value: "Open" },
           {
             name: "ContractExpiry",
-            value: String(expiryDayPut),
+            value: String(expiryDayCall),
           },
           {
             name: "BetAmount",
