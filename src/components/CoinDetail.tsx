@@ -24,6 +24,8 @@ import {
   TableHeaderCell,
   TableBody,
   TableCell,
+  TableFooter,
+  Icon,
 } from "semantic-ui-react";
 
 import Skeleton from "./Skeleton"; // Adjust the import path as necessary
@@ -31,6 +33,8 @@ import { useEffect, useState } from "react";
 import { message, createDataItemSigner, result } from "@permaweb/aoconnect";
 import { PermissionType } from "arconnect";
 import useCronTick from "./useCronTick";
+import completeTrade from "./completeTrade";
+import clearClosed from "./clearClosed.tsx";
 
 // Define types for route parameters
 type RouteParams = {
@@ -627,7 +631,7 @@ const CoinDetail: React.FC = () => {
   }, []);
 
   useCronTick(NOT);
-
+  completeTrade(NOT);
   useEffect(() => {
     const fetchBalance = async (process: string) => {
       try {
@@ -709,7 +713,7 @@ const CoinDetail: React.FC = () => {
                 iconPosition="left"
                 placeholder="Amount of USDA."
               />
-              <span>Minimum Trade time is 5 minutes</span>
+              <span>Minimum Trade time is 5 minutes, Max is 20 USDA</span>
               <Form.Input
                 fluid
                 name="expiryDayCall"
@@ -747,7 +751,7 @@ const CoinDetail: React.FC = () => {
                 Asset Price : {response.market_data.current_price.usd}
               </span>
               <Divider />
-              <span>Minimum Trade Amount is 0.5 USDA</span>
+              <span>Minimum Trade Amount is 0.5 USDA, Max is 20 USDA</span>
               <Form.Input
                 type="number"
                 name="betAmountPut"
@@ -786,7 +790,7 @@ const CoinDetail: React.FC = () => {
       <Header as="h2" color="teal" textAlign="center">
         <Image src="/logox.png" alt="logo" /> Open Trades.
       </Header>
-      <Table celled>
+      <Table padded celled>
         <TableHeader>
           <TableRow>
             <TableHeaderCell>ProcessId</TableHeaderCell>
@@ -827,7 +831,7 @@ const CoinDetail: React.FC = () => {
       <Header as="h2" color="teal" textAlign="center">
         <Image src="/logox.png" alt="logo" /> Closed Trades.
       </Header>
-      <Table celled>
+      <Table padded celled>
         <TableHeader>
           <TableRow>
             <TableHeaderCell>ProcessId</TableHeaderCell>

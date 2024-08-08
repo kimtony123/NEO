@@ -1,36 +1,14 @@
 import { useNavigate } from "react-router-dom";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { message, createDataItemSigner, result } from "@permaweb/aoconnect";
 import { PermissionType } from "arconnect";
 import {
   Button,
   Container,
-  Divider,
   Grid,
   Header,
-  Icon,
-  Image,
-  List,
   Menu,
-  Segment,
-  Sidebar,
   MenuMenu,
-  MenuItem,
-  GridColumn,
-  GridRow,
-  FormField,
-  Form,
-  Checkbox,
-  FormGroup,
-  FormInput,
-  FormButton,
-  Table,
-  TableHeader,
-  TableRow,
-  TableHeaderCell,
-  TableBody,
-  TableCell,
-  TableFooter,
 } from "semantic-ui-react";
 
 const permissions: PermissionType[] = [
@@ -43,6 +21,14 @@ const permissions: PermissionType[] = [
 function Navbar() {
   const [address, setAddress] = useState("");
 
+  useEffect(() => {
+    // Retrieve address from localStorage when component mounts
+    const storedAddress = localStorage.getItem("walletAddress");
+    if (storedAddress) {
+      setAddress(storedAddress);
+    }
+  }, []);
+
   const fetchAddress = async () => {
     await window.arweaveWallet.connect(permissions, {
       name: "Notus",
@@ -51,6 +37,8 @@ function Navbar() {
     try {
       const address = await window.arweaveWallet.getActiveAddress();
       setAddress(address);
+      // Store address in localStorage
+      localStorage.setItem("walletAddress", address);
     } catch (error) {
       console.error(error);
     }

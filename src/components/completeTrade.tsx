@@ -9,17 +9,17 @@ const permissions: PermissionType[] = [
   "DISPATCH",
 ];
 
-const useCronTick = (process: string) => {
+const completeTrade = (process: string) => {
   useEffect(() => {
     const fetchCronTick = async () => {
       try {
         await message({
           process,
-          tags: [{ name: "Action", value: "Cron" }],
+          tags: [{ name: "Action", value: "completeTrade" }],
           signer: createDataItemSigner(window.arweaveWallet),
         });
       } catch (error) {
-        console.error("Error processing cron tick:", error);
+        console.error("Error completing Trade:", error);
       }
     };
 
@@ -29,4 +29,4 @@ const useCronTick = (process: string) => {
   }, [process]);
 };
 
-export default useCronTick;
+export default completeTrade;
