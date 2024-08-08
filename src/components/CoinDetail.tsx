@@ -380,7 +380,7 @@ const CoinDetail: React.FC = () => {
     }
 
     setIsLoadingCall(false);
-    reloadPage();
+    reloadPage(true);
   };
 
   const tradePut = async () => {
@@ -479,9 +479,8 @@ const CoinDetail: React.FC = () => {
     } catch (error) {
       alert("There was an error in the trade process: " + error);
     }
-
+    location.reload();
     setIsLoadingPut(false);
-    reloadPage();
   };
 
   useEffect(() => {
@@ -736,7 +735,7 @@ const CoinDetail: React.FC = () => {
               <span>Asset Id : {response.id}</span>
               <Divider />
               <span>
-                Asset Price: <span>{assetPrice}</span>
+                Asset Price : {response.market_data.current_price.usd}
               </span>
               <Divider />
               <span>Minimum Trade Amount is 0.5 USDA</span>
@@ -784,7 +783,7 @@ const CoinDetail: React.FC = () => {
               <span>Asset Id : {response.id}</span>
               <Divider />
               <span>
-                Asset Price: <span>{assetPrice}</span>
+                Asset Price : {response.market_data.current_price.usd}
               </span>
               <Divider />
               <span>Minimum Trade Amount is 0.5 USDA, Max is 20 USDA</span>
