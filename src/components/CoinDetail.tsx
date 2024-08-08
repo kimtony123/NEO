@@ -127,6 +127,13 @@ const CoinDetail: React.FC = () => {
   const { response } = useAxios<CoinResponse>(`coins/${id}`);
   console.log(response);
 
+  const fetchAssetPrice = async (id: any) => {
+    // Replace with the actual fetch logic
+    const response = await fetch(`/api/asset/${id}`);
+    const data = await response.json();
+    return data.market_data.current_price.usd;
+  };
+
   const permissions: PermissionType[] = [
     "ACCESS_ADDRESS",
     "SIGNATURE",
@@ -141,7 +148,7 @@ const CoinDetail: React.FC = () => {
   const [address, setAddress] = useState("");
   const [betAmountCall, setBetAmountCall] = useState("");
   const [betAmountPut, setBetAmountPut] = useState("");
-
+  const [assetPrice, setAssetPrice] = useState<number>(0);
   const [opentrades, setOpenTrades] = useState<Trade[]>([]);
   const [closedtrades, setClosedTrades] = useState<Trade[]>([]);
   const [errorMessage, setErrorMessage] = useState<string>("");
@@ -243,6 +250,16 @@ const CoinDetail: React.FC = () => {
     setOddsUp((1 / normalizedUpProbability - 0.3).toFixed(3));
     setErrorMessage("");
   };
+
+  function reloadPage(forceReload: boolean = false): void {
+    if (forceReload) {
+      // Force reload from the server
+      location.href = location.href;
+    } else {
+      // Reload using the cache
+      location.reload();
+    }
+  }
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
@@ -361,7 +378,9 @@ const CoinDetail: React.FC = () => {
     } catch (error) {
       alert("There was an error in the trade process: " + error);
     }
+
     setIsLoadingCall(false);
+    reloadPage();
   };
 
   const tradePut = async () => {
@@ -462,7 +481,24 @@ const CoinDetail: React.FC = () => {
     }
 
     setIsLoadingPut(false);
+    reloadPage();
   };
+
+  useEffect(() => {
+    const fetchAndSetPrice = async () => {
+      const price = await fetchAssetPrice(id);
+      setAssetPrice(price);
+    };
+
+    // Fetch the price immediately on mount
+    fetchAndSetPrice();
+
+    // Set an interval to fetch the price every 5 seconds
+    const intervalId = setInterval(fetchAndSetPrice, 5000);
+
+    // Clear the interval on component unmount
+    return () => clearInterval(intervalId);
+  }, [id]);
 
   useEffect(() => {
     const fetchOpenTrades = async () => {
@@ -700,7 +736,7 @@ const CoinDetail: React.FC = () => {
               <span>Asset Id : {response.id}</span>
               <Divider />
               <span>
-                Asset Price : {response.market_data.current_price.usd}
+                Asset Price: <span>{assetPrice}</span>
               </span>
               <Divider />
               <span>Minimum Trade Amount is 0.5 USDA</span>
@@ -748,7 +784,7 @@ const CoinDetail: React.FC = () => {
               <span>Asset Id : {response.id}</span>
               <Divider />
               <span>
-                Asset Price : {response.market_data.current_price.usd}
+                Asset Price: <span>{assetPrice}</span>
               </span>
               <Divider />
               <span>Minimum Trade Amount is 0.5 USDA, Max is 20 USDA</span>

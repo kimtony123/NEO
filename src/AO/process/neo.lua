@@ -114,15 +114,10 @@ function checkTradeWinner(trade, closingPrice)
 end
 
 function sendRewards()
-    -- Print initial state of winners and expiredTrades
+    -- Print initial state of winners
     print("Initial state of winners:")
     for _, winner in pairs(winners) do
         print("Winner UserId: " .. winner.UserId .. ", TradeId: " .. winner.TradeId .. ", Payout: " .. tostring(winner.Payout) .. ", BetAmount: " .. tostring(winner.BetAmount))
-    end
-
-    print("Initial state of expiredTrades:")
-    for tradeId, trade in pairs(expiredTrades) do
-        print("TradeId: " .. tradeId .. ", Outcome: " .. tostring(trade.Outcome))
     end
 
     -- Check if there are any winners or expired trades to process
@@ -131,13 +126,8 @@ function sendRewards()
         return
     end
 
-    if not expiredTrades or next(expiredTrades) == nil then
-        print("No expired trades to process.")
-        return
-    end
-
     -- Process rewards for winners
-    for _, winner in pairs(winners) do
+    for tradeId, winner in pairs(winners) do
         if winner.Payout then
             local payout = winner.Payout * winner.BetAmount
             ao.send({
@@ -152,25 +142,11 @@ function sendRewards()
             print("Transferred: " .. payout .. " successfully to " .. winner.UserId)
 
             -- Update the trade outcome to "won"
-            if expiredTrades[winner.TradeId] then
-                expiredTrades[winner.TradeId].Outcome = "won"
-                closedTrades[winner.TradeId] = expiredTrades[winner.TradeId]
-                print("TradeId " .. winner.TradeId .. " marked as won and moved to closedTrades.")
-                expiredTrades[winner.TradeId] = nil
-            else
-                print("Warning: TradeId " .. winner.TradeId .. " not found in expiredTrades.")
-            end
+            winner.Outcome = "won"
+            closedTrades[tradeId] = winner
+            print("TradeId " .. tradeId .. " marked as won and moved to closedTrades.")
         else
             print("Skipping reward for winner with nil Payout.")
-        end
-    end
-
-    -- Update the outcome of non-winners to "lost"
-    for tradeId, trade in pairs(expiredTrades) do
-        if not trade.Outcome then
-            trade.Outcome = "lost"
-            closedTrades[tradeId] = trade
-            print("TradeId " .. tradeId .. " marked as lost and moved to closedTrades.")
         end
     end
 
@@ -180,26 +156,11 @@ function sendRewards()
         print("TradeId: " .. tradeId .. ", Outcome: " .. tostring(trade.Outcome))
     end
 
-    -- Clear winners and expiredTrades lists after sending rewards
+    -- Clear winners table after sending rewards
     winners = {}
-    expiredTrades = {}
-    print("Cleared winners and expiredTrades.")
+    print("Cleared winners table.")
 end
 
-
--- Check Expired Contracts Handler Function
-function checkExpiredContracts(msg)
-    currentTime = tonumber(msg.Timestamp)
-    print(currentTime)
-    for tradeId, trade in pairs(openTrades) do
-        local contractExp = tonumber(trade.ContractExpiry)
-        if currentTime >= contractExp then
-            trade.ContractStatus = "Expired"
-            expiredTrades[tradeId] = trade
-            openTrades[tradeId] = nil
-        end
-    end
-end
 
 
 function processExpiredContracts(msg)
@@ -231,8 +192,6 @@ function processExpiredContracts(msg)
                 end
             else
                 print("Error: No closing price found for trade:", tradeId, "with AssetId:", trade.AssetId)
-                trade.Outcome = "lost"
-                closedTrades[tradeId] = trade
             end
 
             if not trade.ClosingPrice then -- Add check for nil value
