@@ -87,33 +87,9 @@ const HistoryChart = () => {
 
   return (
     <Container>
-      <Menu>
-        <Button icon="heart" color="green" />
-        <Button href="/" color="green">
-          {" "}
-          Notus Options{" "}
-        </Button>
-
-        <MenuMenu position="right">
-          {address ? (
-            <p>
-              <span className="md:hidden">{`${address.slice(
-                0,
-                5
-              )}...${address.slice(-3)}`}</span>
-              <span className="hidden sm:hidden md:block">{address}</span>
-            </p>
-          ) : (
-            <Button onClick={fetchAddress} primary>
-              Connect Wallet.
-            </Button>
-          )}
-        </MenuMenu>
-      </Menu>
       <div>
         <Line options={options} data={data} />
       </div>
-      <Divider />
     </Container>
   );
 };
