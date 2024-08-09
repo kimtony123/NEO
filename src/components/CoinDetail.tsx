@@ -866,7 +866,7 @@ const CoinDetail: React.FC = () => {
             <TableHeaderCell>Contract Status</TableHeaderCell>
             <TableHeaderCell>Closing Time</TableHeaderCell>
             <TableHeaderCell>
-              Closing Price Powered by Orbitco
+              Closing Price Powered by Orbit.
               <Image src="/orbit.png" />
             </TableHeaderCell>
             <TableHeaderCell>Payout</TableHeaderCell>
