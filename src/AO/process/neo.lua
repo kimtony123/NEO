@@ -119,12 +119,7 @@ function sendRewards()
     for _, winner in pairs(winners) do
         print("Winner UserId: " .. winner.UserId .. ", TradeId: " .. winner.TradeId .. ", Payout: " .. tostring(winner.Payout) .. ", BetAmount: " .. tostring(winner.BetAmount))
     end
-
-    -- Check if there are any winners or expired trades to process
-    if not winners or #winners == 0 then
-        print("No winners to process.")
-        return
-    end
+    
 
     -- Process rewards for winners
     for tradeId, winner in pairs(winners) do

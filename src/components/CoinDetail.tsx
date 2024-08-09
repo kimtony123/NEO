@@ -148,7 +148,6 @@ const CoinDetail: React.FC = () => {
   const [address, setAddress] = useState("");
   const [betAmountCall, setBetAmountCall] = useState("");
   const [betAmountPut, setBetAmountPut] = useState("");
-  const [assetPrice, setAssetPrice] = useState<number>(0);
   const [opentrades, setOpenTrades] = useState<Trade[]>([]);
   const [closedtrades, setClosedTrades] = useState<Trade[]>([]);
   const [errorMessage, setErrorMessage] = useState<string>("");
@@ -158,10 +157,10 @@ const CoinDetail: React.FC = () => {
   const [expiryDayPut, setExpiryDayPut] = useState("");
   const [isLoadingCall, setIsLoadingCall] = useState(false);
   const [isLoadingPut, setIsLoadingPut] = useState(false);
-  const [isLoadingClaim, setIsLoadingClaim] = useState(false);
+
   const [responsemessage, setResponseMessage] = useState<string | null>(null);
 
-  const [claimSuccess, setSuccess] = useState(false);
+  const [sendSuccess, setSuccess] = useState(false);
 
   useEffect(() => {
     calculatePayoffs();
@@ -484,22 +483,6 @@ const CoinDetail: React.FC = () => {
   };
 
   useEffect(() => {
-    const fetchAndSetPrice = async () => {
-      const price = await fetchAssetPrice(id);
-      setAssetPrice(price);
-    };
-
-    // Fetch the price immediately on mount
-    fetchAndSetPrice();
-
-    // Set an interval to fetch the price every 5 seconds
-    const intervalId = setInterval(fetchAndSetPrice, 5000);
-
-    // Clear the interval on component unmount
-    return () => clearInterval(intervalId);
-  }, [id]);
-
-  useEffect(() => {
     const fetchOpenTrades = async () => {
       try {
         const messageResponse = await message({
@@ -667,6 +650,7 @@ const CoinDetail: React.FC = () => {
 
   useCronTick(NOT);
   completeTrade(NOT);
+
   useEffect(() => {
     const fetchBalance = async (process: string) => {
       try {

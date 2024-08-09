@@ -1,65 +1,49 @@
-/* HomePage.css */
-body {
-  background-color: #000;
-  color: #0f0;
+.matrix-bg {
+  background-color: black;
+  color: #00ff00;
   font-family: "Courier New", Courier, monospace;
+  background-image: url("matrix-bg.gif"); /* Add a Matrix code effect image */
+  background-size: cover;
 }
 
-.homepage-container {
-  background-color: #000;
-  color: #0f0;
-  padding: 2rem;
-  border-radius: 10px;
-  box-shadow: 0 0 10px #0f0;
+.matrix-divider {
+  border-color: #00ff00;
 }
 
-.homepage-header {
-  color: #0f0;
-  text-shadow: 0 0 10px #0f0;
-  margin-bottom: 2rem;
+.matrix-card {
+  background-color: rgba(0, 0, 0, 0.9);
+  border: 1px solid #00ff00;
 }
 
-.homepage-card {
-  background-color: #111;
-  color: #0f0;
-  border: 1px solid #0f0;
-  box-shadow: 0 0 10px #0f0;
+.matrix-header {
+  color: #00ff00;
+  text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00;
 }
 
-.homepage-card-header,
-.homepage-card-meta,
-.homepage-card-description {
-  color: #0f0 !important;
+.matrix-meta,
+.matrix-description {
+  color: #00ff00;
 }
 
-.homepage-image {
-  filter: grayscale(100%);
+.matrix-icon {
+  color: #00ff00;
 }
 
-.homepage-button {
-  background-color: #0f0 !important;
-  color: #000 !important;
-  border: 1px solid #0f0 !important;
-  box-shadow: 0 0 10px #0f0 !important;
+.matrix-button {
+  background-color: #00ff00;
+  color: black;
 }
 
-.homepage-menu {
-  background-color: #111 !important;
-  border: 1px solid #0f0 !important;
-  box-shadow: 0 0 10px #0f0;
+.matrix-button:hover {
+  background-color: #009900;
+  color: black;
 }
 
-.homepage-menu-item {
-  color: #0f0 !important;
+.matrix-menu {
+  background-color: black;
+  border: none;
 }
 
-.homepage-menu-item:hover {
-  background-color: #0f0 !important;
-  color: #000 !important;
-}
-
-.homepage-button:hover {
-  background-color: #000 !important;
-  color: #0f0 !important;
-  border: 1px solid #0f0 !important;
+.matrix-menu-item {
+  color: #00ff00 !important;
 }

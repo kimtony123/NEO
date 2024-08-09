@@ -1,5 +1,12 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import {
+  BrowserRouter,
+  Route,
+  Router,
+  Routes,
+  useNavigate,
+  Link,
+} from "react-router-dom";
 import {
   GridColumn,
   Grid,
@@ -19,7 +26,6 @@ import {
   MenuHeader,
   Button,
 } from "semantic-ui-react";
-import "./../homepage.css"; // Import the custom CSS
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -27,71 +33,75 @@ const HomePage = () => {
   const handleClickBinary = () => {
     navigate("/CryptoHome");
   };
+  const handleClickAoHomeOne = () => {
+    navigate("/AoHomeOne");
+  };
 
   return (
-    <Container className="homepage-container">
+    <Container>
       <Divider />
-      <Header as="h1" textAlign="center" className="homepage-header">
-        Notus Exchange Options
-      </Header>
-      <Grid centered>
-        <GridColumn width={8}>
-          <Card fluid className="homepage-card">
-            <Image
-              src="morpheus-blue.png"
-              wrapped
-              ui={false}
-              className="homepage-image"
-            />
+      <Grid columns={2} padded="horizontally">
+        <GridColumn>
+          <Card>
+            <Image src="sunsethome.png" wrapped ui={false} />
             <CardContent>
-              <CardHeader className="homepage-card-header">
-                Notus Crypto Trading Platform
-              </CardHeader>
-              <CardMeta className="homepage-card-meta">
-                Buy crypto binary options
-              </CardMeta>
-              <CardDescription className="homepage-card-description">
-                Buy binary options of your favorite crypto currencies.
+              <CardHeader>AO-ClimaOptions.</CardHeader>
+              <CardMeta>Climate Binary Options Trading platform</CardMeta>
+              <CardDescription>
+                Buy Temperature based binary options of your favorite cities.
+              </CardDescription>
+            </CardContent>
+            <CardContent position="center" extra>
+              <a>
+                <Icon name="money" />
+                <Button primary onClick={handleClickAoHomeOne}>
+                  Trade
+                </Button>
+              </a>
+            </CardContent>
+          </Card>
+        </GridColumn>
+        <GridColumn>
+          <Card>
+            <Image src="morpheus.png" wrapped ui={false} />
+            <CardContent>
+              <CardHeader>Notus Crypto Trading platform</CardHeader>
+              <CardMeta>Buy crypto binary options</CardMeta>
+              <CardDescription>
+                Buy binary options of your favorite crypto currencies .
               </CardDescription>
             </CardContent>
             <CardContent extra>
-              <Icon name="money" />
-              <Button
-                primary
-                onClick={handleClickBinary}
-                className="homepage-button"
-              >
-                Trade
+              <a>
+                <Icon name="money" />
+              </a>
+              <Button primary onClick={handleClickBinary}>
+                Trade.
               </Button>
             </CardContent>
           </Card>
         </GridColumn>
       </Grid>
       <Divider />
-      <Menu inverted className="homepage-menu">
-        <MenuItem
-          href="https://notus-memeframe.vercel.app/"
-          header
-          className="homepage-menu-item"
-        >
-          Notus DAO
+      <Menu>
+        <MenuItem href="https://notus-memeframe.vercel.app/" header>
+          Notus DAO.
         </MenuItem>
-        <MenuItem className="homepage-menu-item">
+
+        <MenuItem>
           <Button
             href="https://x.com/NotusOptions"
-            content="Twitter"
+            content="Twitter."
             icon="twitter"
             labelPosition="right"
-            className="homepage-button"
           />
         </MenuItem>
-        <MenuItem position="right" className="homepage-menu-item">
+        <MenuItem position="right">
           <Button
             href="https://github.com/kimtony123/NEO"
-            content="Github"
+            content="Github."
             icon="github"
             labelPosition="left"
-            className="homepage-button"
           />
         </MenuItem>
       </Menu>
