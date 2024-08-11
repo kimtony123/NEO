@@ -1,0 +1,38 @@
+.banking-container {
+  padding: 40px;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+}
+
+.banking-header {
+  font-family: "Georgia", serif;
+  color: #4b0082;
+  margin-bottom: 40px;
+}
+
+.banking-header,
+.statistic .value {
+  font-size: 2.5em;
+}
+
+.statistic .label {
+  font-size: 1.2em;
+}
+
+.segment {
+  background-color: #f0f0f0 !important;
+}
+
+.statistic.value,
+.statistic.label {
+  color: #333;
+}
+
+.button.primary {
+  background-color: #4b0082 !important;
+}
+
+button.positive,
+button.negative {
+  font-size: 1.2em;
+}

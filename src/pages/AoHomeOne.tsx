@@ -158,6 +158,16 @@ const AoHomeOne = () => {
     } catch (error) {}
   };
 
+  function reloadPage(forceReload: boolean = false): void {
+    if (forceReload) {
+      // Force reload from the server
+      location.href = location.href;
+    } else {
+      // Reload using the cache
+      location.reload();
+    }
+  }
+
   React.useEffect(() => {
     const fetchData = async () => {
       navigator.geolocation.getCurrentPosition(async (position) => {
@@ -266,6 +276,7 @@ const AoHomeOne = () => {
     }
 
     setIsLoadingCall(false);
+    reloadPage(true);
   };
 
   const tradePut = async () => {
@@ -357,8 +368,8 @@ const AoHomeOne = () => {
     } catch (error) {
       alert("There was an error in the trade process: " + error);
     }
-    location.reload();
     setIsLoadingPut(false);
+    reloadPage(true);
   };
 
   useEffect(() => {
@@ -628,6 +639,7 @@ const AoHomeOne = () => {
                     position="left"
                     fluid
                     size="small"
+                    loading={isLoadingCall}
                   >
                     Call.
                   </Button>
@@ -668,6 +680,7 @@ const AoHomeOne = () => {
                     size="small"
                     color="red"
                     position="right"
+                    loading={isLoadingPut}
                   >
                     Put.
                   </Button>
@@ -681,89 +694,106 @@ const AoHomeOne = () => {
           <h3>Fetching data</h3>
         </div>
       )}
-
-      <Header as="h2" color="teal" textAlign="center">
-        <Image src="/logox.png" alt="logo" /> Open Trades.
-      </Header>
-      <Table padded celled>
-        <TableHeader>
-          <TableRow>
-            <TableHeaderCell>ProcessId</TableHeaderCell>
-            <TableHeaderCell>Asset Name</TableHeaderCell>
-            <TableHeaderCell>Asset Price</TableHeaderCell>
-            <TableHeaderCell>Contract Type</TableHeaderCell>
-            <TableHeaderCell>Trade Amount</TableHeaderCell>
-            <TableHeaderCell>Created Time</TableHeaderCell>
-            <TableHeaderCell>Contract Expiry</TableHeaderCell>
-            <TableHeaderCell>Contract Status</TableHeaderCell>
-            <TableHeaderCell>Closing Time</TableHeaderCell>
-            <TableHeaderCell>Closing Temp</TableHeaderCell>
-            <TableHeaderCell>Payout</TableHeaderCell>
-            <TableHeaderCell>Outcome</TableHeaderCell>
-          </TableRow>
-        </TableHeader>
-
-        <TableBody>
-          {opentrades.map((trade, index) => (
-            <TableRow key={index}>
-              <TableCell>{trade.UserId}</TableCell>
-              <TableCell>{trade.Country}</TableCell>
-              <TableCell>{trade.CurrentTemp}</TableCell>
-              <TableCell>{trade.ContractType}</TableCell>
-              <TableCell>{trade.BetAmount}</TableCell>
-              <TableCell>{trade.CreatedTime}</TableCell>
-              <TableCell> {trade.ContractExpiry}</TableCell>
-              <TableCell>{trade.ContractStatus}</TableCell>
-              <TableCell>{trade.ClosingTime}</TableCell>
-              <TableCell>{trade.ClosingTemp}</TableCell>
-              <TableCell>{trade.Payout}</TableCell>
-              <TableCell>{trade.Outcome}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
       <Divider />
-      <Header as="h2" color="teal" textAlign="center">
-        <Image src="/logox.png" alt="logo" /> Closed Trades.
-      </Header>
-      <Table padded celled>
-        <TableHeader>
-          <TableRow>
-            <TableHeaderCell>ProcessId</TableHeaderCell>
-            <TableHeaderCell>Asset Name</TableHeaderCell>
-            <TableHeaderCell>Asset Price</TableHeaderCell>
-            <TableHeaderCell>Contract Type</TableHeaderCell>
-            <TableHeaderCell>Trade Amount</TableHeaderCell>
-            <TableHeaderCell>Created Time</TableHeaderCell>
-            <TableHeaderCell>Contract Expiry</TableHeaderCell>
-            <TableHeaderCell>Contract Status</TableHeaderCell>
-            <TableHeaderCell>Closing Time</TableHeaderCell>
-            <TableHeaderCell>Closing Price</TableHeaderCell>
-            <TableHeaderCell>Payout</TableHeaderCell>
-            <TableHeaderCell>Outcome</TableHeaderCell>
-          </TableRow>
-        </TableHeader>
+      <Grid.Row>
+        <Grid.Column width={16}>
+          <Segment raised style={{ overflowX: "auto", maxWidth: "100%" }}>
+            <Header as="h2" color="teal" textAlign="center">
+              <Image src="/logox.png" alt="logo" /> Open Trades.
+            </Header>
+            <Table celled>
+              <TableHeader>
+                <TableRow>
+                  <TableHeaderCell>ProcessId</TableHeaderCell>
+                  <TableHeaderCell>Country</TableHeaderCell>
+                  <TableHeaderCell>Bought Temp.</TableHeaderCell>
+                  <TableHeaderCell>Contract Type</TableHeaderCell>
+                  <TableHeaderCell>Trade Amount</TableHeaderCell>
+                  <TableHeaderCell>Created Time</TableHeaderCell>
+                  <TableHeaderCell>Contract Expiry</TableHeaderCell>
+                  <TableHeaderCell>Contract Status</TableHeaderCell>
+                  <TableHeaderCell>Closing Time</TableHeaderCell>
+                  <TableHeaderCell>
+                    Closing Temp Powered by Orbitco
+                    <Image src="/orbit.png" />
+                  </TableHeaderCell>
+                  <TableHeaderCell>Payout</TableHeaderCell>
+                  <TableHeaderCell>Outcome</TableHeaderCell>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {opentrades.map((trade, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{trade.UserId}</TableCell>
+                    <TableCell>{trade.Country}</TableCell>
+                    <TableCell>{trade.CurrentTemp}</TableCell>
+                    <TableCell>{trade.ContractType}</TableCell>
+                    <TableCell>{trade.BetAmount}</TableCell>
+                    <TableCell>{trade.CreatedTime}</TableCell>
+                    <TableCell> {trade.ContractExpiry}</TableCell>
+                    <TableCell>{trade.ContractStatus}</TableCell>
+                    <TableCell>{trade.ClosingTime}</TableCell>
+                    <TableCell>{trade.ClosingTemp}</TableCell>
+                    <TableCell>{trade.Payout}</TableCell>
+                    <TableCell>{trade.Outcome}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Segment>
+        </Grid.Column>
+      </Grid.Row>
 
-        <TableBody>
-          {closedtrades.map((trade, index) => (
-            <TableRow key={index}>
-              <TableCell>{trade.UserId}</TableCell>
-              <TableCell>{trade.Country}</TableCell>
-              <TableCell>{trade.CurrentTemp}</TableCell>
-              <TableCell>{trade.ContractType}</TableCell>
-              <TableCell>{trade.BetAmount}</TableCell>
-              <TableCell>{trade.CreatedTime}</TableCell>
-              <TableCell>{trade.ContractExpiry}</TableCell>
-              <TableCell>{trade.ContractStatus}</TableCell>
-              <TableCell>{trade.ClosingTime}</TableCell>
-              <TableCell>{trade.ClosingTemp}</TableCell>
-              <TableCell>{trade.Payout}</TableCell>
-              <TableCell>{trade.Outcome}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <Divider />
 
+      <Grid.Row>
+        <Grid.Column width={16}>
+          <Segment raised style={{ overflowX: "auto", maxWidth: "100%" }}>
+            <Header as="h2" color="teal" textAlign="center">
+              <Image src="/logox.png" alt="logo" /> Closed Trades.
+            </Header>
+            <Table celled>
+              <TableHeader>
+                <TableRow>
+                  <TableHeaderCell>ProcessId</TableHeaderCell>
+                  <TableHeaderCell>Country</TableHeaderCell>
+                  <TableHeaderCell>Bought Temp.</TableHeaderCell>
+                  <TableHeaderCell>Contract Type</TableHeaderCell>
+                  <TableHeaderCell>Trade Amount</TableHeaderCell>
+                  <TableHeaderCell>Created Time</TableHeaderCell>
+                  <TableHeaderCell>Contract Expiry</TableHeaderCell>
+                  <TableHeaderCell>Contract Status</TableHeaderCell>
+                  <TableHeaderCell>Closing Time</TableHeaderCell>
+                  <TableHeaderCell>
+                    Closing Temp Powered by Orbitco
+                    <Image src="/orbit.png" />
+                  </TableHeaderCell>
+                  <TableHeaderCell>Payout</TableHeaderCell>
+                  <TableHeaderCell>Outcome</TableHeaderCell>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {closedtrades.map((trade, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{trade.UserId}</TableCell>
+                    <TableCell>{trade.Country}</TableCell>
+                    <TableCell>{trade.CurrentTemp}</TableCell>
+                    <TableCell>{trade.ContractType}</TableCell>
+                    <TableCell>{trade.BetAmount}</TableCell>
+                    <TableCell>{trade.CreatedTime}</TableCell>
+                    <TableCell> {trade.ContractExpiry}</TableCell>
+                    <TableCell>{trade.ContractStatus}</TableCell>
+                    <TableCell>{trade.ClosingTime}</TableCell>
+                    <TableCell>{trade.ClosingTemp}</TableCell>
+                    <TableCell>{trade.Payout}</TableCell>
+                    <TableCell>{trade.Outcome}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Segment>
+        </Grid.Column>
+      </Grid.Row>
       <Divider />
       <Menu>
         <MenuItem href="https://notus-memeframe.vercel.app/" header>

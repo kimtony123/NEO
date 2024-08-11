@@ -232,6 +232,11 @@ function ClearClosedTrades(userId)
     print("Archived closed trades for user: " .. tostring(userId))
 end
 
+-- Function to get the current time in milliseconds
+function getCurrentTime(msg)
+    return msg.Timestamp  -- returns time in milliseconds
+end
+
 
 Handlers.add(
     "GetTokenPrice",

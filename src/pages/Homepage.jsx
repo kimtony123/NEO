@@ -36,11 +36,14 @@ const HomePage = () => {
   const handleClickAoHomeOne = () => {
     navigate("/AoHomeOne");
   };
+  const neoHedgeFund = () => {
+    navigate("/neoHedgeFund");
+  };
 
   return (
     <Container>
       <Divider />
-      <Grid columns={2} padded="horizontally">
+      <Grid columns={3} padded="horizontally">
         <GridColumn>
           <Card>
             <Image src="sunsethome.png" wrapped ui={false} />
@@ -48,7 +51,7 @@ const HomePage = () => {
               <CardHeader>AO-ClimaOptions.</CardHeader>
               <CardMeta>Climate Binary Options Trading platform</CardMeta>
               <CardDescription>
-                Buy Temperature based binary options of your favorite cities.
+                Buy Temperature based binary options.
               </CardDescription>
             </CardContent>
             <CardContent position="center" extra>
@@ -58,6 +61,26 @@ const HomePage = () => {
                   Trade
                 </Button>
               </a>
+            </CardContent>
+          </Card>
+        </GridColumn>
+        <GridColumn>
+          <Card>
+            <Image src="NEO HedgeFund.jpg" wrapped ui={false} />
+            <CardContent>
+              <CardHeader>NEO Decentralized Hedge Fund</CardHeader>
+              <CardMeta> Accrued Returns </CardMeta>
+              <CardDescription>
+                The First Decentralized Hedge Fund.
+              </CardDescription>
+            </CardContent>
+            <CardContent extra>
+              <a>
+                <Icon name="money" />
+              </a>
+              <Button primary onClick={neoHedgeFund}>
+                Invest.
+              </Button>
             </CardContent>
           </Card>
         </GridColumn>
