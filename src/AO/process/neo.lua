@@ -101,6 +101,19 @@ function tableToJson(tbl)
     return json
 end
 
+-- Check Expired Contracts Handler Function
+function checkExpiredContracts(msg)
+    currentTime = tonumber(msg.Timestamp)
+    print(currentTime)
+    for tradeId, trade in pairs(openTrades) do
+        local contractExp = tonumber(trade.ContractExpiry)
+        if currentTime >= contractExp then
+            trade.ContractStatus = "Expired"
+            expiredTrades[tradeId] = trade
+            openTrades[tradeId] = nil
+        end
+    end
+end
 
 -- Function to check if the trade is a winner
 function checkTradeWinner(trade, closingPrice)
@@ -119,7 +132,6 @@ function sendRewards()
     for _, winner in pairs(winners) do
         print("Winner UserId: " .. winner.UserId .. ", TradeId: " .. winner.TradeId .. ", Payout: " .. tostring(winner.Payout) .. ", BetAmount: " .. tostring(winner.BetAmount))
     end
-    
 
     -- Process rewards for winners
     for tradeId, winner in pairs(winners) do
@@ -132,29 +144,29 @@ function sendRewards()
                 Recipient = tostring(winner.UserId)
             })
 
-            -- Ensure balances[winner.UserId] is initialized to 0 if it's nil
-            balances[winner.UserId] = (balances[winner.UserId] or 0) + payout
-            print("Transferred: " .. payout .. " successfully to " .. winner.UserId)
-
             -- Update the trade outcome to "won"
             winner.Outcome = "won"
             closedTrades[tradeId] = winner
+            ArchivedTrades[tradeId] = winner
             print("TradeId " .. tradeId .. " marked as won and moved to closedTrades.")
+            
+            -- Set expired trade to nil after processing
+            expiredTrades[tradeId] = nil
         else
             print("Skipping reward for winner with nil Payout.")
         end
     end
+
+    -- Clear the winners table after processing rewards
+    winners = {}
 
     -- Print final state of closedTrades
     print("Final state of closedTrades:")
     for tradeId, trade in pairs(closedTrades) do
         print("TradeId: " .. tradeId .. ", Outcome: " .. tostring(trade.Outcome))
     end
-
-    -- Clear winners table after sending rewards
-    winners = {}
-    print("Cleared winners table.")
 end
+
 
 
 
@@ -184,17 +196,17 @@ function processExpiredContracts(msg)
                 else
                     trade.Outcome = "lost"
                     closedTrades[tradeId] = trade
+                    ArchivedTrades[tradeId] = trade
+                -- Set expired trade to nil after processing
+                    expiredTrades[tradeId] = nil
                 end
             else
                 print("Error: No closing price found for trade:", tradeId, "with AssetId:", trade.AssetId)
             end
 
             if not trade.ClosingPrice then -- Add check for nil value
-                print("Skipping tradeId:", tradeId, "due to nil ClosingPrice.")
+                print("Skipping tradeId:", tradeId, "due to nil ClosingTime.")
             end
-
-            -- Set expired trade to nil after processing
-            expiredTrades[tradeId] = nil
         end
     end
 
@@ -438,6 +450,20 @@ Handlers.add(
     end
 )
 
+-- Handler to respond to ArchivedTrades request
+Handlers.add(
+    "getArchivedTrades",
+    Handlers.utils.hasMatchingTag("Action", "getArchivedTrades"),
+    function(m)
+        -- Send the openTrades data back to the requesting process
+        ao.send({
+            Target = m.From, -- Reply to the sender
+            Action = "archivedTradesResponse",
+            Data = json.encode(ArchivedTrades)
+        })
+    end
+)
+
 -- Handler to respond to openTrades request
 Handlers.add(
     "getOpenTrades",
@@ -447,7 +473,7 @@ Handlers.add(
         ao.send({
             Target = m.From, -- Reply to the sender
             Action = "openTradesResponse",
-            Data = json.encode(ArchivedTrades)
+            Data = json.encode(openTrades)
         })
     end
 )

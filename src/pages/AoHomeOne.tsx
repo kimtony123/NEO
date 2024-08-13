@@ -7,17 +7,12 @@ import {
   Grid,
   Image,
   Segment,
-  Sidebar,
   MenuMenu,
   MenuItem,
   GridColumn,
   Form,
   Menu,
-  FormGroup,
-  FormInput,
-  FormButton,
   Input,
-  Icon,
   Header,
   Table,
   TableHeader,
@@ -30,6 +25,7 @@ import {
 import { useEffect, useState } from "react";
 import { message, createDataItemSigner, result } from "@permaweb/aoconnect";
 import { PermissionType } from "arconnect";
+import useCronTickA from "../components/useCronTickA";
 
 const AoHomeOne = () => {
   const permissions: PermissionType[] = [
@@ -53,7 +49,7 @@ const AoHomeOne = () => {
     }
   };
 
-  const AOC = "IvHcj3ncp_zwcUMCsu9JEznHXb1GsDZcwRdAud8AJCQ";
+  const AOC = "6XvODi4DHKQh1ebBugfyVIXuaHUE5SKEaK1-JbhkMfs";
   const USDA = "GcFxqTQnKHcr304qnOcq00ZqbaYGDn4Wbb0DHAM-wvU";
   interface Tag {
     name: string;
@@ -87,6 +83,7 @@ const AoHomeOne = () => {
     ClosingTemp: number;
     ClosingTime: string;
     Payout: number;
+    City: string;
   }
 
   interface Trade {
@@ -104,6 +101,7 @@ const AoHomeOne = () => {
     ClosingTemp: number;
     ClosingTime: string;
     Payout: number;
+    City: string;
   }
 
   const api_key = "a2f4db644e9107746535b0d2ca43b85d";
@@ -336,7 +334,7 @@ const AoHomeOne = () => {
           { name: "Action", value: "trade" },
           { name: "TradeId", value: String(randomInt(1, 1000000000)) },
           { name: "Country", value: String(weatherData?.sys.country!) },
-          { name: "City", value: String(weatherData?.id!) },
+          { name: "City", value: String(weatherData?.name!) },
           { name: "CountryId", value: String(weatherData?.id!) },
           { name: "CurrentTemp", value: String(weatherData?.main.temp) },
           { name: "ContractType", value: "Put" },
@@ -423,6 +421,7 @@ const AoHomeOne = () => {
                 }
               ),
               Country: typedDetails.Country,
+              City: typedDetails.City,
               CurrentTemp: typedDetails.CurrentTemp,
               ContractStatus: typedDetails.ContractStatus,
               TradeId: typedDetails.TradeId,
@@ -453,6 +452,8 @@ const AoHomeOne = () => {
     fetchOpenTrades();
   }, []);
 
+  useCronTickA(AOC);
+
   useEffect(() => {
     const fetchClosedTrades = async () => {
       try {
@@ -481,6 +482,7 @@ const AoHomeOne = () => {
               const typedDetails: TradeDetails = details as TradeDetails;
               return {
                 Country: typedDetails.Country,
+                City: typedDetails.City,
                 CurrentTemp: typedDetails.CurrentTemp,
                 ContractStatus: typedDetails.ContractStatus,
                 CountryId: typedDetails.CountryId,
@@ -706,6 +708,7 @@ const AoHomeOne = () => {
                 <TableRow>
                   <TableHeaderCell>ProcessId</TableHeaderCell>
                   <TableHeaderCell>Country</TableHeaderCell>
+                  <TableHeaderCell>City</TableHeaderCell>
                   <TableHeaderCell>Bought Temp.</TableHeaderCell>
                   <TableHeaderCell>Contract Type</TableHeaderCell>
                   <TableHeaderCell>Trade Amount</TableHeaderCell>
@@ -714,7 +717,7 @@ const AoHomeOne = () => {
                   <TableHeaderCell>Contract Status</TableHeaderCell>
                   <TableHeaderCell>Closing Time</TableHeaderCell>
                   <TableHeaderCell>
-                    Closing Temp Powered by Orbitco
+                    Closing Temp Powered by Orbit
                     <Image src="/orbit.png" />
                   </TableHeaderCell>
                   <TableHeaderCell>Payout</TableHeaderCell>
@@ -726,6 +729,7 @@ const AoHomeOne = () => {
                   <TableRow key={index}>
                     <TableCell>{trade.UserId}</TableCell>
                     <TableCell>{trade.Country}</TableCell>
+                    <TableCell>{trade.City}</TableCell>
                     <TableCell>{trade.CurrentTemp}</TableCell>
                     <TableCell>{trade.ContractType}</TableCell>
                     <TableCell>{trade.BetAmount}</TableCell>
@@ -757,6 +761,7 @@ const AoHomeOne = () => {
                 <TableRow>
                   <TableHeaderCell>ProcessId</TableHeaderCell>
                   <TableHeaderCell>Country</TableHeaderCell>
+                  <TableHeaderCell>City</TableHeaderCell>
                   <TableHeaderCell>Bought Temp.</TableHeaderCell>
                   <TableHeaderCell>Contract Type</TableHeaderCell>
                   <TableHeaderCell>Trade Amount</TableHeaderCell>
@@ -765,7 +770,7 @@ const AoHomeOne = () => {
                   <TableHeaderCell>Contract Status</TableHeaderCell>
                   <TableHeaderCell>Closing Time</TableHeaderCell>
                   <TableHeaderCell>
-                    Closing Temp Powered by Orbitco
+                    Closing Temp Powered by Orbit
                     <Image src="/orbit.png" />
                   </TableHeaderCell>
                   <TableHeaderCell>Payout</TableHeaderCell>
@@ -777,6 +782,7 @@ const AoHomeOne = () => {
                   <TableRow key={index}>
                     <TableCell>{trade.UserId}</TableCell>
                     <TableCell>{trade.Country}</TableCell>
+                    <TableCell>{trade.City}</TableCell>
                     <TableCell>{trade.CurrentTemp}</TableCell>
                     <TableCell>{trade.ContractType}</TableCell>
                     <TableCell>{trade.BetAmount}</TableCell>

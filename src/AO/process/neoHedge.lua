@@ -13,7 +13,7 @@ transactions = transactions or {}
 transactionCounter = transactionCounter or 0
 
 -- List to store closed checked trades
-closedCheckedTrades = closedCheckedTrades or {}
+currentRunningTrades = currentRunningTrades or {}
 
 -- Credentials token
 NEO = "wPmY5MO0DPWpgUGGj8LD7ZmuPmWdYZ2NnELeXdGgctQ"
@@ -24,6 +24,30 @@ USDA = "GcFxqTQnKHcr304qnOcq00ZqbaYGDn4Wbb0DHAM-wvU";
 function deposit(user, amount)
     balances[user] = (balances[user] or 0) + amount
     print(user .. " deposited " .. amount .. ". New balance: " .. balances[user])
+end
+
+
+-- Function to find the most successful trader
+function findMostSuccessfulTrader()
+    local wins = {}
+    
+    for _, trade in pairs(archivedTrades) do
+        if trade.Outcome == "won" then
+            wins[trade.UserId] = (wins[trade.UserId] or 0) + 1
+        end
+    end
+
+    local maxWins = 0
+    local mostSuccessfulTrader = nil
+    
+    for user, winCount in pairs(wins) do
+        if winCount > maxWins then
+            maxWins = winCount
+            mostSuccessfulTrader = user
+        end
+    end
+    
+    return mostSuccessfulTrader
 end
 
 -- Function to withdraw funds
@@ -64,13 +88,91 @@ function getCurrentTime(msg)
     return msg.Timestamp  -- returns time in milliseconds
 end
 
-
+-- Check Expired Contracts Handler Function
+function checkExpiredContracts(msg)
+    currentTime = tonumber(msg.Timestamp)
+    print(currentTime)
+    for tradeId, trade in pairs(openTrades) do
+        local contractExp = tonumber(trade.ContractExpiry)
+        if currentTime >= contractExp then
+            trade.ContractStatus = "Expired"
+            expiredTrades[tradeId] = trade
+            openTrades[tradeId] = nil
+        end
+    end
+end
 
 -- Function to generate a unique transaction ID
 function generateTransactionId()
     transactionCounter = transactionCounter + 1
     return "TX" .. tostring(transactionCounter)
 end
+
+
+-- Function to fetch openTrades from another process
+function fetchOpenTrades()
+    -- Send a request to the target process to get the openTrades
+    ao.send({
+        Target = NEO, -- Replace with the actual target process name or identifier
+        Action = "getOpenTrades"
+    })
+end
+
+-- Function to fetch archivedTrades from another process
+function fetchArchivedTrades()
+    -- Send a request to the target process to get the openTrades
+    ao.send({
+        Target = NEO, -- Replace with the actual target process name or identifier
+        Action = "getArchivedTrades"
+    })
+end
+
+-- Handler to process the response with openTrades data
+Handlers.add(
+    "openTradesResponse",
+    Handlers.utils.hasMatchingTag("Action", "openTradesResponse"),
+    function(m)
+        local openTradesData = json.decode(m.Data)
+        print("Received openTrades data:", json.encode(openTradesData))
+        
+        -- Save the openTrades data into closedCheckedTrades list
+        for _, trade in pairs(openTradesData) do
+            table.insert(currentRunningTrades, trade)
+        end
+        print("Updated currentRunningTrades:", json.encode(currentRunningTrades))
+    end
+)
+
+-- Handler to process the response with openTrades data
+Handlers.add(
+    "archivedTradesResponse",
+    Handlers.utils.hasMatchingTag("Action", "archivedTradesResponse"),
+    function(m)
+        local archivedTradesData = json.decode(m.Data)
+        print("Received openTrades data:", json.encode(archivedTradesData))
+        
+        -- Save the openTrades data into closedCheckedTrades list
+        for _, trade in pairs(archivedTradesData) do
+            table.insert(archivedTrades, trade)
+        end
+        print("Updated archivedTrades:", json.encode(archivedTrades))
+    end
+)
+
+Handlers.add(
+     "fetchOpenTrades",
+    Handlers.utils.hasMatchingTag("Action", "fetchOpenTrades"),
+    fetchOpenTrades
+
+)
+
+
+Handlers.add(
+     "fetchArchivedTrades",
+    Handlers.utils.hasMatchingTag("Action", "fetchArchivedTrades"),
+    fetchArchivedTrades
+)
+
 
 -- Handler for deposit
 Handlers.add(
