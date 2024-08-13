@@ -316,7 +316,7 @@ Handlers.add(
                     ContractType = m.Tags.ContractType,
                     ContractStatus = m.Tags.ContractStatus,
                     CreatedTime = currentTime,
-                    ContractExpiry = currentTime + (5 * 60 * 1000), -- Convert minutes to milliseconds
+                    ContractExpiry = currentTime + (1140 * 60 * 1000), -- Convert minutes to milliseconds
                     BetAmount = qty,
                     Payout = m.Tags.Payout,
                     Outcome = outcome -- Initialize outcome as nil
