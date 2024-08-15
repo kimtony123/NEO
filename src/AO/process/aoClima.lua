@@ -4,12 +4,10 @@ local math = require("math")
 _0RBIT = "BaMK1dfayo75s3q1ow6AO64UDpD9SEFbeE8xYrY2fyQ"
 _0RBT_TOKEN = "BUhZLMwQ6yZHguLtJYA5lLUa9LQzLXMXRfaq9FVcPJc"
 
-local city = city or {} -- Replace with your cities
 local BASE_URL = "https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=a2f4db644e9107746535b0d2ca43b85d&units=metric"
 
 FEE_AMOUNT = "1000000000000" -- 1 $0RBT
 
-WEATHER_DATA = WEATHER_DATA or {}
 balances = balances or {}
 
 ArchivedTrades = ArchivedTrades or {}
@@ -27,18 +25,19 @@ closedTrades = closedTrades or {}
 winners = winners or {}
 Profits = Profits or {}
 
+-- Callback function for fetch price
+fetchPriceCallback = nil
 
-local pendingTrades = {} -- Temporary table to store trades waiting for a response
+-- Table to store weather data
+WEATHER_DATA = WEATHER_DATA or  {}
 
-function fetchPrice(callback, City, tradeId)
+
+function fetchPrice(callback, City)
     local city = City
     local url = string.format("https://api.openweathermap.org/data/2.5/weather?q=%s&appid=a2f4db644e9107746535b0d2ca43b85d&units=metric", city)
 
-    -- Save the callback and tradeId to be called later
-    pendingTrades[tradeId] = {
-        callback = callback,
-        city = city,
-    }
+    -- Print the URL to verify it before sending
+    print("Generated URL:", url)
 
     Send({
         Target = _0RBT_TOKEN,
@@ -49,83 +48,124 @@ function fetchPrice(callback, City, tradeId)
         ["X-Action"] = "Get-Real-Data"
     })
 
-    print("GET Request sent to the 0rbit process for tradeId:", tradeId)
+    print("GET Request sent to the 0rbit process.")
+
+    -- Save the callback to be called later
+    fetchPriceCallback = callback
 end
 
+-- Store the received weather data
 function receiveData(msg)
-    local res = json.decode(msg.Data)
+    if msg.Action == "Receive-Response" then
+        -- Decode the incoming JSON data
+        local res, pos, err = json.decode(msg.Data)
 
-    for _, weather in ipairs(res) do
-        -- Find the pending trade based on city or another identifier
-        for tradeId, tradeInfo in pairs(pendingTrades) do
-            if tradeInfo.city == weather.name then
-                WEATHER_DATA[weather.name] = {
-                    id = weather.id,
-                    name = weather.name,
-                    currentTemp = weather.main.temp
-                }
-
-                -- Call the callback with the tradeId
-                if tradeInfo.callback then
-                    tradeInfo.callback(tradeId, weather.main.temp)
-                end
-
-                -- Remove the trade from the pending list
-                pendingTrades[tradeId] = nil
-                break
-            end
+        -- Check if JSON decoding was successful
+        if not res then
+            print("Error decoding JSON:", err)
+            return
         end
+
+        -- Print the entire decoded data for verification
+        print("Received data:")
+        print(res)
+
+        -- Ensure that the received data has the necessary fields
+        if res.name and res.main and res.main.temp then
+            -- Store the weather data in the WEATHER_DATA table using city name as the key
+            WEATHER_DATA[res.name] = {
+                id = res.id,
+                name = res.name,
+                currentTemp = res.main.temp
+            }
+
+            -- Print the stored data for verification
+            print("Stored data in WEATHER_DATA for city:", res.name)
+            print("ID: " .. WEATHER_DATA[res.name].id)
+            print("Current Temperature: " .. WEATHER_DATA[res.name].currentTemp)
+        else
+            print("Error: Missing necessary data in the response.")
+        end
+
+        -- Call the callback if it exists
+        if fetchPriceCallback then
+            fetchPriceCallback()
+            fetchPriceCallback = nil -- Clear the callback after calling
+        end
+    else
+        print("Error: Unrecognized action in message.")
     end
 end
 
+-- Retrieve the price from WEATHER_DATA
+function getTokenPrice(token)
+    local token_data = WEATHER_DATA[token]
 
-function processExpiredContracts(msg)
-    currentTime = tonumber(msg.Timestamp)
+    if not token_data or not token_data.currentTemp then
+        print("Error: No data found for token", token)
+        return nil
+    else
+        print("Returning currentTemp for token", token, ":", token_data.currentTemp)
+        return token_data.currentTemp
+    end
+end
+
+function processExpiredContracts(m)
+    currentTime = getCurrentTime(m)
     print("Starting to process expired contracts at time:", currentTime)
 
+    -- Check if the expiredTrades list is empty and exit early if it is
     if next(expiredTrades) == nil then
         print("No expired trades to process.")
         return
     end
 
-    local function processTrades(tradeId, trade)
-        return function()
-            if not trade then
-                print("Error: trade is nil for tradeId:", tradeId)
-                return
-            end
-
-            local closingTemp = getTokenPrice(trade.City)
-            if closingTemp then
-                trade.ClosingTemp = closingTemp
-                trade.ClosingTime = currentTime
-                print("Updated trade:", tradeId, "with ClosingTemp:", closingTemp, "and ClosingTime:", currentTime)
-
-                if checkTradeWinner(trade, closingTemp) then
-                    winners[tradeId] = trade
-                else
-                    trade.Outcome = "lost"
-                    closedTrades[tradeId] = trade
-                    expiredTrades[tradeId] = nil
-                end
-            else
-                print("Error: No closing temperature found for trade:", tradeId, "with City:", trade.City)
-            end
-        end
-    end
-
-    for tradeId, trade in pairs(expiredTrades) do
-        if trade then
+    -- Define the callback to process expired trades after fetching prices
+    local function processTrades()
+        for tradeId, trade in pairs(expiredTrades) do
             print("Processing tradeId:", tradeId)
-            fetchPrice(processTrades(tradeId, trade), trade.City)
-        else
-            print("Error: trade is nil for tradeId:", tradeId)
+            print("Trade Details: ", trade)
+
+            -- Fetch the current temperature for the city associated with the trade
+            fetchPrice(function()
+                local closingTemp = getTokenPrice(trade.City)
+                if closingTemp then
+                    trade.ClosingTemp = closingTemp
+                    trade.ClosingTime = currentTime
+                    print("Updated trade:", tradeId, "with ClosingTemp:", closingTemp, "and ClosingTime:", currentTime)
+                    
+                    -- Check if the trade is a winner
+                    if checkTradeWinner(trade, closingTemp) then
+                        winners[tradeId] = trade
+                        print("Trade is a winner:", tradeId)
+                    else
+                        trade.Outcome = "lost"
+                        closedTrades[tradeId] = trade
+                        print("Trade lost:", tradeId)
+                    end
+                    
+                    -- Remove the trade from expiredTrades after processing
+                    expiredTrades[tradeId] = nil
+                else
+                    print("Error: No closing temperature found for trade:", tradeId, "with City:", trade.City)
+                end
+            end, trade.City)
+
+            -- Check if ClosingTemp was not set, indicating an issue
+            if not trade.ClosingTemp then
+                print("Skipping tradeId:", tradeId, "due to nil ClosingTemp.")
+            end
         end
     end
 
+    -- Call the processTrades function to begin processing
+    processTrades()
+
+    -- Confirm that sendRewards function is called
     print("Calling sendRewards function")
     sendRewards()
 
+    -- Print final state of expiredTrades to ensure trades are removed after processing
     print("Final state of expiredTrades:")
     for tradeId, trade in pairs(expiredTrades) do
         print("TradeId: " .. tradeId .. ", Trade: " .. tostring(trade))
@@ -249,7 +289,7 @@ end
 
 -- Function to get the current time in milliseconds
 function getCurrentTime(msg)
-    return msg.Timestamp  -- returns time in milliseconds
+    return msg.Timestamp -- returns time in milliseconds
 end
 
 Handlers.add(
@@ -316,7 +356,7 @@ Handlers.add(
                     ContractType = m.Tags.ContractType,
                     ContractStatus = m.Tags.ContractStatus,
                     CreatedTime = currentTime,
-                    ContractExpiry = currentTime + (1140 * 60 * 1000), -- Convert minutes to milliseconds
+                    ContractExpiry = currentTime + ( 86400  * 1000), -- Convert minutes to milliseconds
                     BetAmount = qty,
                     Payout = m.Tags.Payout,
                     Outcome = outcome -- Initialize outcome as nil
@@ -342,6 +382,12 @@ Handlers.add(
     "openTrades",
     Handlers.utils.hasMatchingTag("Action", "openTrades"),
     function(m)
+        if not openTrades or next(openTrades) == nil then
+            print("openTrades table is empty or nil.")
+            ao.send({ Target = m.From, Data = "{}" }) -- Send an empty JSON if there are no trades
+            return
+        end
+
         local filteredTrades = {}
         for tradeId, trade in pairs(openTrades) do
             if trade.UserId == m.From then
@@ -356,6 +402,13 @@ Handlers.add(
     "closedTrades",
     Handlers.utils.hasMatchingTag("Action", "closedTrades"),
     function(m)
+        -- Check if closedTrades is nil or empty
+        if not closedTrades or next(closedTrades) == nil then
+            print("closedTrades table is empty or nil.")
+            ao.send({ Target = m.From, Data = "{}" }) -- Send an empty JSON if there are no trades
+            return
+        end
+
         -- Print the entire closedTrades table as a string for debugging
         print("Debugging closedTrades table:")
         print(closedTrades, {comment = false})
@@ -380,6 +433,8 @@ Handlers.add(
     end
 )
 
+
+
 Handlers.add(
     "FetchPrice",
     Handlers.utils.hasMatchingTag("Action", "Fetch-Price"),
@@ -402,5 +457,15 @@ Handlers.add(
     Handlers.utils.hasMatchingTag("Action", "completeTrade"),
     function(m)
         processExpiredContracts(m)
+    end
+)
+
+
+Handlers.add(
+    "ClearExpiredTrades",
+    Handlers.utils.hasMatchingTag("Action", "ClearExpiredTrades"),
+    function(m)
+        expiredTrades = {}
+        print("expiredTrades  have been cleared.")
     end
 )

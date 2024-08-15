@@ -171,6 +171,7 @@ end
 
 
 function processExpiredContracts(msg)
+    -- Convert the incoming timestamp to a number
     currentTime = tonumber(msg.Timestamp)
     print("Starting to process expired contracts at time:", currentTime)
 
@@ -180,16 +181,22 @@ function processExpiredContracts(msg)
         return
     end
 
-    -- Define the callback to process expired trades after fetching prices
+    -- Define a function to process expired trades after fetching prices
     local function processTrades()
         for tradeId, trade in pairs(expiredTrades) do
             print("Processing tradeId:", tradeId)
+            
+            -- Fetch the latest price for the asset
             fetchPrice()
+            
+            -- Get the token price using the trade's AssetId
             local closingPrice = getTokenPrice(trade.AssetId)
             if closingPrice then
+                -- Update the trade with the closing price and current time
                 trade.ClosingPrice = closingPrice
                 trade.ClosingTime = currentTime
                 print("Updated trade:", tradeId, "with ClosingPrice:", closingPrice, "and ClosingTime:", currentTime)
+                
                 -- Check if the trade is a winner
                 if checkTradeWinner(trade, closingPrice) then
                     winners[tradeId] = trade
@@ -197,31 +204,34 @@ function processExpiredContracts(msg)
                     trade.Outcome = "lost"
                     closedTrades[tradeId] = trade
                     ArchivedTrades[tradeId] = trade
-                -- Set expired trade to nil after processing
+                    -- Set the expired trade to nil after processing
                     expiredTrades[tradeId] = nil
                 end
             else
                 print("Error: No closing price found for trade:", tradeId, "with AssetId:", trade.AssetId)
             end
 
-            if not trade.ClosingPrice then -- Add check for nil value
+            -- Ensure that the trade has a valid closing price before proceeding
+            if not trade.ClosingPrice then
                 print("Skipping tradeId:", tradeId, "due to nil ClosingTime.")
             end
         end
     end
 
+    -- Call the function to process trades
     processTrades()
 
     -- Confirm that sendRewards function is called
     print("Calling sendRewards function")
     sendRewards()
 
-    -- Print final state of expiredTrades
+    -- Print the final state of expiredTrades
     print("Final state of expiredTrades:")
     for tradeId, trade in pairs(expiredTrades) do
         print("TradeId: " .. tradeId .. ", Trade: " .. tostring(trade))
     end
 end
+
 
 
 

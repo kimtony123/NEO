@@ -717,7 +717,7 @@ const AoHomeOne = () => {
                   <TableHeaderCell>Contract Status</TableHeaderCell>
                   <TableHeaderCell>Closing Time</TableHeaderCell>
                   <TableHeaderCell>
-                    Closing Temp Powered by Orbit
+                    Real-World-Data Powered by Orbit
                     <Image src="/orbit.png" />
                   </TableHeaderCell>
                   <TableHeaderCell>Payout</TableHeaderCell>
@@ -770,7 +770,7 @@ const AoHomeOne = () => {
                   <TableHeaderCell>Contract Status</TableHeaderCell>
                   <TableHeaderCell>Closing Time</TableHeaderCell>
                   <TableHeaderCell>
-                    Closing Temp Powered by Orbit
+                    Real world Data Powered by Orbit
                     <Image src="/orbit.png" />
                   </TableHeaderCell>
                   <TableHeaderCell>Payout</TableHeaderCell>
