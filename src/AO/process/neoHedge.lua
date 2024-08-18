@@ -27,6 +27,42 @@ function deposit(user, amount)
 end
 
 
+-- Function to withdraw funds
+function withdraw(user, amount)
+    -- Check if the user has a balance and if it is sufficient
+    if balances[user] and balances[user] > 0 then
+        if balances[user] >= amount then
+            -- Deduct the amount from the user's balance
+            balances[user] = balances[user] - amount
+            print(user .. " withdrew " .. amount .. ". New balance: " .. balances[user])
+
+            -- Send confirmation message to the user
+            ao.send({
+                Target = user,
+                Data = "Successfully Withdrawn. New balance: " .. balances[user] / 1000000000000
+            })
+
+            return true -- Withdrawal successful
+        else
+            print("Insufficient balance for " .. user)
+            ao.send({
+                Target = user,
+                Data = "Insufficient balance. Current balance: " .. balances[user] / 1000000000000
+            })
+            return false -- Withdrawal failed due to insufficient funds
+        end
+    else
+        -- Handle the case where the user has no balance or a balance of 0
+        print("Insufficient balance for " .. user)
+        ao.send({
+            Target = user,
+            Data = "Insufficient balance. Current balance: 0"
+        })
+        return false -- Withdrawal failed due to 0 balance
+    end
+end
+
+
 -- Function to find the most successful trader
 function findMostSuccessfulTrader()
     local wins = {}
@@ -48,18 +84,6 @@ function findMostSuccessfulTrader()
     end
     
     return mostSuccessfulTrader
-end
-
--- Function to withdraw funds
-function withdraw(user, amount)
-    if balances[user] and balances[user] >= amount then
-        balances[user] = balances[user] - amount
-        print(user .. " withdrew " .. amount .. ". New balance: " .. balances[user])
-        return true  -- Withdrawal successful
-    else
-        print("Insufficient balance for " .. user)
-        return false  -- Withdrawal failed
-    end
 end
 
 function tableToJson(tbl)
@@ -235,8 +259,7 @@ Handlers.add(
                     type = "withdrawal",
                     amount = amount,
                     balance = balances[user],
-                    timestamp = currentTime
-                })
+                    timestamp = currentTime})
             else
                 ao.send({ Target = m.From, Data = "Withdrawal failed due to insufficient funds. Current balance: " .. balances[user]/1000000000000 })
             end
@@ -270,11 +293,12 @@ Handlers.add(
         
         -- Filter transactions for the specific user
         for _, transaction in ipairs(transactions) do
-            if transaction.user == user then
+            -- Skip nil transactions
+            if transaction ~= nil and transaction.user == user then
                 table.insert(user_transactions, transaction)
             end
         end
-        
+        -- Send the filtered transactions back to the user
         ao.send({ Target = user, Data = tableToJson(user_transactions) })
     end
 )

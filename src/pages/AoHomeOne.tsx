@@ -21,6 +21,7 @@ import {
   TableBody,
   TableCell,
 } from "semantic-ui-react";
+import { sign } from "@othent/kms"; // Import the sign method
 
 import { useEffect, useState } from "react";
 import { message, createDataItemSigner, result } from "@permaweb/aoconnect";
@@ -44,6 +45,12 @@ const AoHomeOne = () => {
       case "betAmountPut":
         setBetAmountPut(value);
         break;
+      case "depositAmount":
+        setDepositAmount(value);
+        break;
+      case "withdrawAmount":
+        setWithdrawAmount(value);
+        break;
       default:
         break;
     }
@@ -66,6 +73,15 @@ const AoHomeOne = () => {
     sys: {
       country: string;
     };
+  }
+
+  interface Transaction {
+    user: string;
+    transactionid: string;
+    amount: string;
+    type: string;
+    balance: string;
+    timestamp: string;
   }
 
   interface TradeDetails {
@@ -113,6 +129,7 @@ const AoHomeOne = () => {
   const [isLoading, setIsLoading] = React.useState(false);
   const [address, setAddress] = useState("");
   const [aocBalance, setAocBalance] = useState(0);
+  const [usdaBalance, setUsdaBalance] = useState(0);
   const [betAmountCall, setBetAmountCall] = useState("");
   const [betAmountPut, setBetAmountPut] = useState("");
   const [assetPrice, setAssetPrice] = useState<number>(0);
@@ -122,8 +139,16 @@ const AoHomeOne = () => {
   const [isLoadingCall, setIsLoadingCall] = useState(false);
   const [isLoadingPut, setIsLoadingPut] = useState(false);
   const [searchCity, setSearchCity] = React.useState("");
-  const [trades, setTrades] = useState<Trade[]>([]);
+  const [interest, setInterest] = useState(50.258); // Example accrued interest
+  const [amount, setAmount] = useState("");
+  const [trades, setTrades] = useState([]);
+  const [transactions, setTransactions] = useState([]);
+  const [isLoadingDeposit, setIsLoadingDeposit] = useState(false);
+  const [isLoadingWithdraw, setIsLoadingWithdraw] = useState(false);
+  const [depositAmount, setDepositAmount] = useState("");
+  const [withdrawAmount, setWithdrawAmount] = useState("");
   const [sendSuccess, setSuccess] = useState(false);
+  const [transactionlist, setTransactionDetails] = useState<Transaction[]>([]);
 
   const fetchCurrentWeather = React.useCallback(
     async (lat: number, lon: number) => {
@@ -185,12 +210,12 @@ const AoHomeOne = () => {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   };
 
-  const tradeCall = async () => {
-    setIsLoadingCall(true);
+  const deposit = async () => {
+    setIsLoadingDeposit(true);
 
     // Function to handle the swap and set success state
     const send = async (): Promise<void> => {
-      var value = parseInt(betAmountCall);
+      var value = parseInt(depositAmount);
       var units = value * 1000000000000;
       var credUnits = units.toString();
       try {
@@ -227,11 +252,92 @@ const AoHomeOne = () => {
         throw error;
       }
     };
-
     try {
       // Await the send function to ensure it completes before proceeding
       await send();
 
+      // Proceed with creating the trade only if send was successful
+      const getPropMessage = await message({
+        process: AOC,
+        tags: [
+          { name: "Action", value: "deposit" },
+          {
+            name: "Amount",
+            value: String(parseInt(depositAmount) * 1000000000000),
+          },
+        ],
+        signer: createDataItemSigner(window.arweaveWallet),
+      });
+
+      let { Messages, Error } = await result({
+        message: getPropMessage,
+        process: AOC,
+      });
+      if (Error) {
+        alert("Error Depositing : " + Error);
+        return;
+      }
+      if (!Messages || Messages.length === 0) {
+        alert("No messages were returned from ao. Please try later.");
+        return;
+      }
+      alert(Messages[0].Data);
+      setDepositAmount("");
+    } catch (error) {
+      alert("There was an error in the trade process: " + error);
+    }
+
+    setIsLoadingDeposit(false);
+    reloadPage(true);
+  };
+
+  const withdraw = async () => {
+    setIsLoadingWithdraw(true);
+    var value = parseInt(withdrawAmount);
+    var units = value * 1000000000000;
+    var credUnits = units.toString();
+    try {
+      // Proceed with creating the trade only if send was successful
+      const getPropMessage = await message({
+        process: AOC,
+        tags: [
+          { name: "Action", value: "withdraw" },
+          {
+            name: "Amount",
+            value: String(credUnits),
+          },
+        ],
+        signer: createDataItemSigner(window.arweaveWallet),
+      });
+
+      let { Messages, Error } = await result({
+        message: getPropMessage,
+        process: AOC,
+      });
+      if (Error) {
+        alert("Error Withdrawing : " + Error);
+        return;
+      }
+      if (!Messages || Messages.length === 0) {
+        alert("No messages were returned from ao. Please try later.");
+        return;
+      }
+      alert(Messages[0].Data);
+      setWithdrawAmount("");
+    } catch (error) {
+      alert("There was an error in the trade process: " + error);
+    }
+    setIsLoadingWithdraw(false);
+    reloadPage(true);
+  };
+
+  const tradeCall = async () => {
+    setIsLoadingCall(true);
+    // Function to handle the swap and set success state
+    var value = parseInt(betAmountCall);
+    var units = value * 1000000000000;
+    var credUnits = units.toString();
+    try {
       // Proceed with creating the trade only if send was successful
       const getPropMessage = await message({
         process: AOC,
@@ -248,9 +354,9 @@ const AoHomeOne = () => {
           { name: "ContractStatus", value: "Open" },
           {
             name: "BetAmount",
-            value: String(Number(betAmountCall) * 1000000000000),
+            value: credUnits,
           },
-          { name: "Payout", value: String(1.7) },
+          { name: "Payout", value: String(1.5) },
         ],
         signer: createDataItemSigner(window.arweaveWallet),
       });
@@ -279,54 +385,11 @@ const AoHomeOne = () => {
 
   const tradePut = async () => {
     setIsLoadingPut(true);
-
+    var value = parseInt(betAmountPut);
+    var units = value * 1000000000000;
+    var credUnits = units.toString();
     // Function to handle the swap and set success state
-    const send = async (): Promise<void> => {
-      var value = parseInt(betAmountPut);
-      var units = value * 1000000000000;
-      var credUnits = units.toString();
-      try {
-        const getSwapMessage = await message({
-          process: USDA,
-          tags: [
-            { name: "Action", value: "Transfer" },
-            { name: "Recipient", value: AOC },
-            { name: "Quantity", value: credUnits },
-          ],
-          signer: createDataItemSigner(window.arweaveWallet),
-        });
-
-        let { Messages, Error } = await result({
-          message: getSwapMessage,
-          process: USDA,
-        });
-        if (Error) {
-          alert("Error Sending USDA: " + Error);
-          throw new Error(Error);
-        }
-        if (!Messages || Messages.length === 0) {
-          alert("No messages were returned from ao. Please try later.");
-          throw new Error("No messages were returned from ao.");
-        }
-        const actionTag = Messages[0].Tags.find(
-          (tag: Tag) => tag.name === "Action"
-        );
-        if (actionTag.value === "Debit-Notice") {
-          setSuccess(true);
-        }
-      } catch (error) {
-        alert("There was an error sending USDA: " + error);
-        throw error;
-      }
-    };
-
-    const randomIntPut = (min: number, max: number): number => {
-      return Math.floor(Math.random() * (max - min + 1)) + min;
-    };
     try {
-      // Await the send function to ensure it completes before proceeding
-      await send();
-
       // Proceed with creating the trade only if send was successful
       const getPropMessage = await message({
         process: AOC,
@@ -342,9 +405,9 @@ const AoHomeOne = () => {
           { name: "ContractStatus", value: "Open" },
           {
             name: "BetAmount",
-            value: String(Number(betAmountPut) * 1000000000000),
+            value: credUnits,
           },
-          { name: "Payout", value: String(1.7) },
+          { name: "Payout", value: String(1.5) },
         ],
         signer: createDataItemSigner(window.arweaveWallet),
       });
@@ -452,8 +515,6 @@ const AoHomeOne = () => {
     fetchOpenTrades();
   }, []);
 
-  useCronTickA(AOC);
-
   useEffect(() => {
     const fetchClosedTrades = async () => {
       try {
@@ -540,7 +601,7 @@ const AoHomeOne = () => {
   }, []);
 
   useEffect(() => {
-    const fetchBalance = async (process: string) => {
+    const fetchBalanceUsda = async (process: string) => {
       try {
         const messageResponse = await message({
           process,
@@ -568,6 +629,47 @@ const AoHomeOne = () => {
             ? parseFloat((balanceTag.value / 1000000000000).toFixed(4))
             : 0;
           if (process === USDA) {
+            setUsdaBalance(balance);
+          }
+        } catch (error) {
+          alert("There was an error when loading balances: " + error);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchBalanceUsda(USDA);
+  }, [address]);
+
+  useEffect(() => {
+    const fetchBalanceAoc = async (process: string) => {
+      try {
+        const messageResponse = await message({
+          process,
+          tags: [{ name: "Action", value: "Balance" }],
+          signer: createDataItemSigner(window.arweaveWallet),
+        });
+        const getBalanceMessage = messageResponse;
+        try {
+          let { Messages, Error } = await result({
+            message: getBalanceMessage,
+            process,
+          });
+          if (Error) {
+            alert("Error fetching balances:" + Error);
+            return;
+          }
+          if (!Messages || Messages.length === 0) {
+            alert("No messages were returned from ao. Please try later.");
+            return;
+          }
+          const balanceTag = Messages[0].Tags.find(
+            (tag: Tag) => tag.name === "Balance"
+          );
+          const balance = balanceTag
+            ? parseFloat((balanceTag.value / 1000000000000).toFixed(4))
+            : 0;
+          if (process === AOC) {
             setAocBalance(balance);
           }
         } catch (error) {
@@ -577,18 +679,127 @@ const AoHomeOne = () => {
         console.error(error);
       }
     };
-    fetchBalance(USDA);
+    fetchBalanceAoc(AOC);
   }, [address]);
+
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        const messageResponse = await message({
+          process: AOC,
+          tags: [{ name: "Action", value: "view_transactions" }],
+          signer: createDataItemSigner(window.arweaveWallet),
+        });
+        const getProposalsMessage = messageResponse;
+        try {
+          let { Messages, Error } = await result({
+            message: getProposalsMessage,
+            process: AOC,
+          });
+          if (Error) {
+            alert("Error fetching transactions:" + Error);
+            return;
+          }
+          if (!Messages || Messages.length === 0) {
+            alert("No messages were returned from ao. Please try later.");
+            return;
+          }
+          const data = JSON.parse(Messages[0].Data);
+          const openTradesData = Object.entries(data).map(([name, details]) => {
+            const typedDetails: Transaction = details as Transaction;
+            return {
+              user: typedDetails.user,
+              transactionid: typedDetails.transactionid,
+              amount: typedDetails.amount / 1000000000000,
+              type: typedDetails.type,
+              balance: typedDetails.balance / 1000000000000,
+              timestamp: new Date(typedDetails.timestamp).toLocaleString(
+                "en-US",
+                {
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: false, // Use 24-hour format
+                }
+              ),
+            };
+          });
+          setTransactionDetails(openTradesData);
+        } catch (error) {
+          alert("There was an error when loading balances: " + error);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchTransactions();
+  }, []);
+
+  useCronTickA(AOC);
 
   return (
     <Container>
       <Divider />
       <Menu pointing>
+        <MenuMenu position="left">
+          <MenuItem>
+            <Form>
+              <Form.Input
+                type="number"
+                name="withdrawAmount"
+                value={withdrawAmount}
+                onChange={handleInputChange}
+                icon="money"
+                iconPosition="left"
+                placeholder="Amount of USDA."
+              />
+              <Button
+                secondary
+                fluid
+                onClick={withdraw}
+                style={{ marginTop: "10px" }}
+                loading={isLoadingWithdraw}
+              >
+                Withdraw
+              </Button>
+            </Form>
+          </MenuItem>
+        </MenuMenu>
+        <MenuMenu position="right">
+          <MenuItem>
+            <Form>
+              <Form.Input
+                type="number"
+                name="depositAmount"
+                value={depositAmount}
+                onChange={handleInputChange}
+                icon="money"
+                iconPosition="left"
+                placeholder="Amount of USDA."
+              />
+              <Button
+                primary
+                fluid
+                onClick={deposit}
+                style={{ marginTop: "10px" }}
+                loading={isLoadingDeposit}
+              >
+                Deposit.
+              </Button>
+            </Form>
+          </MenuItem>
+        </MenuMenu>
+      </Menu>
+      <Divider />
+      <Menu pointing>
         <MenuItem>
-          Staked USDA Balance: <span className="font-bold">0</span>
+          AoClimaOptions Balance:{" "}
+          <span className="font-bold">{aocBalance}</span>
         </MenuItem>
         <MenuItem>
-          USDA Balance: <span className="font-bold">{aocBalance}</span>
+          USDA Balance: <span className="font-bold"> {usdaBalance}</span>
         </MenuItem>
         <MenuMenu position="right">
           <MenuItem>
@@ -700,6 +911,41 @@ const AoHomeOne = () => {
       <Grid.Row>
         <Grid.Column width={16}>
           <Segment raised style={{ overflowX: "auto", maxWidth: "100%" }}>
+            <Header as="h3" textAlign="center">
+              Your Transaction History
+            </Header>
+            <Table celled>
+              <Table.Header>
+                <Table.Row>
+                  <Table.HeaderCell>tId</Table.HeaderCell>
+                  <Table.HeaderCell>user</Table.HeaderCell>
+                  <Table.HeaderCell>Amount</Table.HeaderCell>
+                  <Table.HeaderCell>type</Table.HeaderCell>
+                  <Table.HeaderCell>Balance</Table.HeaderCell>
+                  <Table.HeaderCell>Timestamp</Table.HeaderCell>
+                </Table.Row>
+              </Table.Header>
+
+              <Table.Body>
+                {transactionlist.map((transaction, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{transaction.transactionid}</TableCell>
+                    <TableCell>{transaction.user}</TableCell>
+                    <TableCell>{transaction.amount}</TableCell>
+                    <TableCell>{transaction.type}</TableCell>
+                    <TableCell>{transaction.balance}</TableCell>
+                    <TableCell>{transaction.timestamp}</TableCell>
+                  </TableRow>
+                ))}
+              </Table.Body>
+            </Table>
+          </Segment>
+        </Grid.Column>
+      </Grid.Row>
+      <Divider />
+      <Grid.Row>
+        <Grid.Column width={16}>
+          <Segment raised style={{ overflowX: "auto", maxWidth: "100%" }}>
             <Header as="h2" color="teal" textAlign="center">
               <Image src="/logox.png" alt="logo" /> Open Trades.
             </Header>
@@ -747,9 +993,7 @@ const AoHomeOne = () => {
           </Segment>
         </Grid.Column>
       </Grid.Row>
-
       <Divider />
-
       <Grid.Row>
         <Grid.Column width={16}>
           <Segment raised style={{ overflowX: "auto", maxWidth: "100%" }}>

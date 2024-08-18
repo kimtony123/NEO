@@ -302,7 +302,6 @@ const BankingHomepage = () => {
         NEO Decentralized Hedge Fund.
       </Header>
       <Divider />
-
       <Grid columns={2} stackable>
         <Grid.Row>
           <Grid.Column>

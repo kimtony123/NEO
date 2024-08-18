@@ -90,6 +90,7 @@ const HistoryChart = () => {
       <div>
         <Line options={options} data={data} />
       </div>
+      <Divider />
     </Container>
   );
 };

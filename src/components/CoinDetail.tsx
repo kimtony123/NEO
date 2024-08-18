@@ -26,6 +26,7 @@ import {
   TableCell,
   TableFooter,
   Icon,
+  Input,
 } from "semantic-ui-react";
 
 import Skeleton from "./Skeleton"; // Adjust the import path as necessary
@@ -94,6 +95,14 @@ interface Trade {
   Payout: number;
   Outcome: string;
 }
+interface Transaction {
+  user: string;
+  transactionid: string;
+  amount: string;
+  type: string;
+  balance: string;
+  timestamp: string;
+}
 
 // Time Decay Function
 const timeDecay = (expiryMinutes: number) => {
@@ -137,7 +146,17 @@ const CoinDetail: React.FC = () => {
   const NOT = "wPmY5MO0DPWpgUGGj8LD7ZmuPmWdYZ2NnELeXdGgctQ";
   const USDA = "GcFxqTQnKHcr304qnOcq00ZqbaYGDn4Wbb0DHAM-wvU";
 
+  const [interest, setInterest] = useState(50.258); // Example accrued interest
+  const [amount, setAmount] = useState("");
+  const [trades, setTrades] = useState([]);
+  const [transactions, setTransactions] = useState([]);
+  const [isLoadingDeposit, setIsLoadingDeposit] = useState(false);
+  const [isLoadingWithdraw, setIsLoadingWithdraw] = useState(false);
+  const [depositAmount, setDepositAmount] = useState("");
+  const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [transactionlist, setTransactionDetails] = useState<Transaction[]>([]);
   const [aocBalance, setAocBalance] = useState(0);
+  const [usdaBalance, setUsdaBalance] = useState(0);
   const [address, setAddress] = useState("");
   const [betAmountCall, setBetAmountCall] = useState("");
   const [betAmountPut, setBetAmountPut] = useState("");
@@ -268,6 +287,12 @@ const CoinDetail: React.FC = () => {
       case "expiryDayPut":
         setExpiryDayPut(value);
         break;
+      case "depositAmount":
+        setDepositAmount(value);
+        break;
+      case "withdrawAmount":
+        setWithdrawAmount(value);
+        break;
       default:
         break;
     }
@@ -277,12 +302,12 @@ const CoinDetail: React.FC = () => {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   };
 
-  const tradeCall = async () => {
-    setIsLoadingCall(true);
+  const deposit = async () => {
+    setIsLoadingDeposit(true);
 
     // Function to handle the swap and set success state
     const send = async (): Promise<void> => {
-      var value = parseInt(betAmountCall);
+      var value = parseInt(depositAmount);
       var units = value * 1000000000000;
       var credUnits = units.toString();
       try {
@@ -319,11 +344,91 @@ const CoinDetail: React.FC = () => {
         throw error;
       }
     };
-
     try {
       // Await the send function to ensure it completes before proceeding
       await send();
 
+      // Proceed with creating the trade only if send was successful
+      const getPropMessage = await message({
+        process: NOT,
+        tags: [
+          { name: "Action", value: "deposit" },
+          {
+            name: "Amount",
+            value: String(parseInt(depositAmount) * 1000000000000),
+          },
+        ],
+        signer: createDataItemSigner(window.arweaveWallet),
+      });
+
+      let { Messages, Error } = await result({
+        message: getPropMessage,
+        process: NOT,
+      });
+      if (Error) {
+        alert("Error Depositing : " + Error);
+        return;
+      }
+      if (!Messages || Messages.length === 0) {
+        alert("No messages were returned from ao. Please try later.");
+        return;
+      }
+      alert(Messages[0].Data);
+      setDepositAmount("");
+    } catch (error) {
+      alert("There was an error in the trade process: " + error);
+    }
+
+    setIsLoadingDeposit(false);
+    reloadPage(true);
+  };
+
+  const withdraw = async () => {
+    setIsLoadingWithdraw(true);
+    var value = parseInt(withdrawAmount);
+    var units = value * 1000000000000;
+    var credUnits = units.toString();
+    try {
+      // Proceed with creating the trade only if send was successful
+      const getPropMessage = await message({
+        process: NOT,
+        tags: [
+          { name: "Action", value: "withdraw" },
+          {
+            name: "Amount",
+            value: String(credUnits),
+          },
+        ],
+        signer: createDataItemSigner(window.arweaveWallet),
+      });
+
+      let { Messages, Error } = await result({
+        message: getPropMessage,
+        process: NOT,
+      });
+      if (Error) {
+        alert("Error Withdrawing : " + Error);
+        return;
+      }
+      if (!Messages || Messages.length === 0) {
+        alert("No messages were returned from ao. Please try later.");
+        return;
+      }
+      alert(Messages[0].Data);
+      setWithdrawAmount("");
+    } catch (error) {
+      alert("There was an error in the trade process: " + error);
+    }
+    setIsLoadingWithdraw(false);
+    reloadPage(true);
+  };
+
+  const tradeCall = async () => {
+    setIsLoadingCall(true);
+    var value = parseInt(betAmountCall);
+    var units = value * 1000000000000;
+    var credUnits = units.toString();
+    try {
       // Proceed with creating the trade only if send was successful
       const getPropMessage = await message({
         process: NOT,
@@ -345,7 +450,7 @@ const CoinDetail: React.FC = () => {
           },
           {
             name: "BetAmount",
-            value: String(Number(betAmountCall) * 1000000000000),
+            value: credUnits,
           },
           { name: "Payout", value: String(oddsDown) },
         ],
@@ -377,60 +482,16 @@ const CoinDetail: React.FC = () => {
 
   const tradePut = async () => {
     setIsLoadingPut(true);
-
-    // Function to handle the swap and set success state
-    const send = async (): Promise<void> => {
-      var value = parseInt(betAmountPut);
-      var units = value * 1000000000000;
-      var credUnits = units.toString();
-      try {
-        const getSwapMessage = await message({
-          process: USDA,
-          tags: [
-            { name: "Action", value: "Transfer" },
-            { name: "Recipient", value: NOT },
-            { name: "Quantity", value: credUnits },
-          ],
-          signer: createDataItemSigner(window.arweaveWallet),
-        });
-
-        let { Messages, Error } = await result({
-          message: getSwapMessage,
-          process: USDA,
-        });
-        if (Error) {
-          alert("Error Sending USDA: " + Error);
-          throw new Error(Error);
-        }
-        if (!Messages || Messages.length === 0) {
-          alert("No messages were returned from ao. Please try later.");
-          throw new Error("No messages were returned from ao.");
-        }
-        const actionTag = Messages[0].Tags.find(
-          (tag: Tag) => tag.name === "Action"
-        );
-        if (actionTag.value === "Debit-Notice") {
-          setSuccess(true);
-        }
-      } catch (error) {
-        alert("There was an error sending USDA: " + error);
-        throw error;
-      }
-    };
-
-    const randomIntPut = (min: number, max: number): number => {
-      return Math.floor(Math.random() * (max - min + 1)) + min;
-    };
+    var value = parseInt(betAmountPut);
+    var units = value * 1000000000000;
+    var credUnits = units.toString();
     try {
-      // Await the send function to ensure it completes before proceeding
-      await send();
-
       // Proceed with creating the trade only if send was successful
       const getPropMessage = await message({
         process: NOT,
         tags: [
           { name: "Action", value: "trade" },
-          { name: "TradeId", value: String(randomIntPut(1, 1000000000)) },
+          { name: "TradeId", value: String(randomInt(1, 1000000000)) },
           { name: "Name", value: String(response?.name!) },
           { name: "AssetId", value: String(response?.symbol!) },
           {
@@ -446,7 +507,7 @@ const CoinDetail: React.FC = () => {
           },
           {
             name: "BetAmount",
-            value: String(Number(betAmountPut) * 1000000000000),
+            value: credUnits,
           },
           { name: "Payout", value: String(oddsDown) },
         ],
@@ -641,11 +702,8 @@ const CoinDetail: React.FC = () => {
     fetchClosedTrades();
   }, []);
 
-  useCronTick(NOT);
-  completeTrade(NOT);
-
   useEffect(() => {
-    const fetchBalance = async (process: string) => {
+    const fetchBalanceUsda = async (process: string) => {
       try {
         const messageResponse = await message({
           process,
@@ -673,6 +731,47 @@ const CoinDetail: React.FC = () => {
             ? parseFloat((balanceTag.value / 1000000000000).toFixed(4))
             : 0;
           if (process === USDA) {
+            setUsdaBalance(balance);
+          }
+        } catch (error) {
+          alert("There was an error when loading balances: " + error);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchBalanceUsda(USDA);
+  }, [address]);
+
+  useEffect(() => {
+    const fetchBalanceAoc = async (process: string) => {
+      try {
+        const messageResponse = await message({
+          process,
+          tags: [{ name: "Action", value: "Balance" }],
+          signer: createDataItemSigner(window.arweaveWallet),
+        });
+        const getBalanceMessage = messageResponse;
+        try {
+          let { Messages, Error } = await result({
+            message: getBalanceMessage,
+            process,
+          });
+          if (Error) {
+            alert("Error fetching balances:" + Error);
+            return;
+          }
+          if (!Messages || Messages.length === 0) {
+            alert("No messages were returned from ao. Please try later.");
+            return;
+          }
+          const balanceTag = Messages[0].Tags.find(
+            (tag: Tag) => tag.name === "Balance"
+          );
+          const balance = balanceTag
+            ? parseFloat((balanceTag.value / 1000000000000).toFixed(4))
+            : 0;
+          if (process === NOT) {
             setAocBalance(balance);
           }
         } catch (error) {
@@ -682,8 +781,66 @@ const CoinDetail: React.FC = () => {
         console.error(error);
       }
     };
-    fetchBalance(USDA);
+    fetchBalanceAoc(NOT);
   }, [address]);
+
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        const messageResponse = await message({
+          process: NOT,
+          tags: [{ name: "Action", value: "view_transactions" }],
+          signer: createDataItemSigner(window.arweaveWallet),
+        });
+        const getProposalsMessage = messageResponse;
+        try {
+          let { Messages, Error } = await result({
+            message: getProposalsMessage,
+            process: NOT,
+          });
+          if (Error) {
+            alert("Error fetching transactions:" + Error);
+            return;
+          }
+          if (!Messages || Messages.length === 0) {
+            alert("No messages were returned from ao. Please try later.");
+            return;
+          }
+          const data = JSON.parse(Messages[0].Data);
+          const openTradesData = Object.entries(data).map(([name, details]) => {
+            const typedDetails: Transaction = details as Transaction;
+            return {
+              user: typedDetails.user,
+              transactionid: typedDetails.transactionid,
+              amount: typedDetails.amount / 1000000000000,
+              type: typedDetails.type,
+              balance: typedDetails.balance / 1000000000000,
+              timestamp: new Date(typedDetails.timestamp).toLocaleString(
+                "en-US",
+                {
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: false, // Use 24-hour format
+                }
+              ),
+            };
+          });
+          setTransactionDetails(openTradesData);
+        } catch (error) {
+          alert("There was an error when loading balances: " + error);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchTransactions();
+  }, []);
+
+  useCronTick(NOT);
+  completeTrade(NOT);
 
   if (!response) {
     return (
@@ -696,6 +853,56 @@ const CoinDetail: React.FC = () => {
 
   return (
     <Container>
+      <Menu pointing>
+        <MenuMenu position="left">
+          <MenuItem>
+            <Form>
+              <Form.Input
+                type="text"
+                name="withdrawAmount"
+                value={withdrawAmount}
+                onChange={handleInputChange}
+                icon="money"
+                iconPosition="left"
+                placeholder="Amount of USDA."
+              />
+              <Button
+                secondary
+                fluid
+                onClick={withdraw}
+                style={{ marginTop: "10px" }}
+                loading={isLoadingWithdraw}
+              >
+                Withdraw
+              </Button>
+            </Form>
+          </MenuItem>
+        </MenuMenu>
+        <MenuMenu position="right">
+          <MenuItem>
+            <Form>
+              <Form.Input
+                type="number"
+                name="depositAmount"
+                value={depositAmount}
+                onChange={handleInputChange}
+                icon="money"
+                iconPosition="left"
+                placeholder="Amount of USDA."
+              />
+              <Button
+                primary
+                fluid
+                onClick={deposit}
+                style={{ marginTop: "10px" }}
+                loading={isLoadingDeposit}
+              >
+                Deposit.
+              </Button>
+            </Form>
+          </MenuItem>
+        </MenuMenu>
+      </Menu>
       <Header as="h2" color="teal" textAlign="center">
         <Image src="/logox.png" alt="logo" /> Create a Trade.
       </Header>
@@ -704,7 +911,7 @@ const CoinDetail: React.FC = () => {
         <Divider />
         <Grid.Column>
           <Form size="large">
-            <span> USDA Balance: {aocBalance}</span>
+            <span> NEO Balance: {aocBalance}</span>
             <Segment stacked>
               <Image src={response.image.small} wrapped ui={false} />
               <span> Asset Name: {response.name}</span>
@@ -715,7 +922,7 @@ const CoinDetail: React.FC = () => {
                 Asset Price : {response.market_data.current_price.usd}
               </span>
               <Divider />
-              <span>Minimum Trade Amount is 0.5 USDA</span>
+              <span>Minimum Trade Amount is 0.5 USDA, Max is 20 USDA</span>
               <Form.Input
                 type="number"
                 name="betAmountCall"
@@ -725,7 +932,7 @@ const CoinDetail: React.FC = () => {
                 iconPosition="left"
                 placeholder="Amount of USDA."
               />
-              <span>Minimum Trade time is 5 minutes, Max is 20 USDA</span>
+              <span>Minimum Trade time is 5 minutes.</span>
               <Form.Input
                 fluid
                 name="expiryDayCall"
@@ -752,7 +959,7 @@ const CoinDetail: React.FC = () => {
         </Grid.Column>
         <Grid.Column>
           <Form size="large">
-            <span> Staked USDA Balance: 0</span>
+            <span> USDA Balance: {usdaBalance}</span>
             <Segment stacked>
               <Image src={response.image.small} wrapped ui={false} />
               <span> Asset Name: {response.name}</span>
@@ -799,107 +1006,139 @@ const CoinDetail: React.FC = () => {
           </Form>
         </Grid.Column>
       </Grid>
-      <Grid>
-        <Grid.Row>
-          <Grid.Column width={16}>
-            <Segment raised style={{ overflowX: "auto", maxWidth: "100%" }}>
-              <Header as="h2" color="teal" textAlign="center">
-                <Image src="/logox.png" alt="logo" /> Open Trades.
-              </Header>
-              <Table celled>
-                <TableHeader>
-                  <TableRow>
-                    <TableHeaderCell>ProcessId</TableHeaderCell>
-                    <TableHeaderCell>Asset Name</TableHeaderCell>
-                    <TableHeaderCell>Asset Price</TableHeaderCell>
-                    <TableHeaderCell>Contract Type</TableHeaderCell>
-                    <TableHeaderCell>Trade Amount</TableHeaderCell>
-                    <TableHeaderCell>Created Time</TableHeaderCell>
-                    <TableHeaderCell>Contract Expiry</TableHeaderCell>
-                    <TableHeaderCell>Contract Status</TableHeaderCell>
-                    <TableHeaderCell>Closing Time</TableHeaderCell>
-                    <TableHeaderCell>
-                      Real world Data Powered by Orbitco
-                      <Image src="/orbit.png" />
-                    </TableHeaderCell>
-                    <TableHeaderCell>Payout</TableHeaderCell>
-                    <TableHeaderCell>Outcome</TableHeaderCell>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {opentrades.map((trade, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{trade.UserId}</TableCell>
-                      <TableCell>{trade.Name}</TableCell>
-                      <TableCell>{trade.AssetPrice}</TableCell>
-                      <TableCell>{trade.ContractType}</TableCell>
-                      <TableCell>{trade.BetAmount}</TableCell>
-                      <TableCell>{trade.CreatedTime}</TableCell>
-                      <TableCell> {trade.ContractExpiry}</TableCell>
-                      <TableCell>{trade.ContractStatus}</TableCell>
-                      <TableCell>{trade.ClosingTime}</TableCell>
-                      <TableCell>{trade.ClosingPrice}</TableCell>
-                      <TableCell>{trade.Payout}</TableCell>
-                      <TableCell>{trade.Outcome}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Segment>
-          </Grid.Column>
-        </Grid.Row>
-      </Grid>
       <Divider />
-      <Grid>
-        <Grid.Row>
-          <Grid.Column width={16}>
-            <Segment raised style={{ overflowX: "auto", maxWidth: "100%" }}>
-              <Header as="h2" color="teal" textAlign="center">
-                <Image src="/logox.png" alt="logo" /> Closed Trades.
-              </Header>
-              <Table celled>
-                <TableHeader>
-                  <TableRow>
-                    <TableHeaderCell>ProcessId</TableHeaderCell>
-                    <TableHeaderCell>Asset Name</TableHeaderCell>
-                    <TableHeaderCell>Asset Price</TableHeaderCell>
-                    <TableHeaderCell>Contract Type</TableHeaderCell>
-                    <TableHeaderCell>Trade Amount</TableHeaderCell>
-                    <TableHeaderCell>Created Time</TableHeaderCell>
-                    <TableHeaderCell>Contract Expiry</TableHeaderCell>
-                    <TableHeaderCell>Contract Status</TableHeaderCell>
-                    <TableHeaderCell>Closing Time</TableHeaderCell>
-                    <TableHeaderCell>
-                      Real-World Data Powered by Orbitco
-                      <Image src="/orbit.png" />
-                    </TableHeaderCell>
-                    <TableHeaderCell>Payout</TableHeaderCell>
-                    <TableHeaderCell>Outcome</TableHeaderCell>
+      <Grid.Row>
+        <Grid.Column width={16}>
+          <Segment raised style={{ overflowX: "auto", maxWidth: "100%" }}>
+            <Header as="h3" textAlign="center">
+              Your Transaction History
+            </Header>
+            <Table celled>
+              <Table.Header>
+                <Table.Row>
+                  <Table.HeaderCell>tId</Table.HeaderCell>
+                  <Table.HeaderCell>user</Table.HeaderCell>
+                  <Table.HeaderCell>Amount</Table.HeaderCell>
+                  <Table.HeaderCell>type</Table.HeaderCell>
+                  <Table.HeaderCell>Balance</Table.HeaderCell>
+                  <Table.HeaderCell>Timestamp</Table.HeaderCell>
+                </Table.Row>
+              </Table.Header>
+
+              <Table.Body>
+                {transactionlist.map((transaction, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{transaction.transactionid}</TableCell>
+                    <TableCell>{transaction.user}</TableCell>
+                    <TableCell>{transaction.amount}</TableCell>
+                    <TableCell>{transaction.type}</TableCell>
+                    <TableCell>{transaction.balance}</TableCell>
+                    <TableCell>{transaction.timestamp}</TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {closedtrades.map((trade, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{trade.UserId}</TableCell>
-                      <TableCell>{trade.Name}</TableCell>
-                      <TableCell>{trade.AssetPrice}</TableCell>
-                      <TableCell>{trade.ContractType}</TableCell>
-                      <TableCell>{trade.BetAmount}</TableCell>
-                      <TableCell>{trade.CreatedTime}</TableCell>
-                      <TableCell>{trade.ContractExpiry}</TableCell>
-                      <TableCell>{trade.ContractStatus}</TableCell>
-                      <TableCell>{trade.ClosingTime}</TableCell>
-                      <TableCell>{trade.ClosingPrice}</TableCell>
-                      <TableCell>{trade.Payout}</TableCell>
-                      <TableCell>{trade.Outcome}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Segment>
-          </Grid.Column>
-        </Grid.Row>
-      </Grid>
+                ))}
+              </Table.Body>
+            </Table>
+          </Segment>
+        </Grid.Column>
+      </Grid.Row>
+      <Divider />
+      <Grid.Row>
+        <Grid.Column width={16}>
+          <Segment raised style={{ overflowX: "auto", maxWidth: "100%" }}>
+            <Header as="h2" color="teal" textAlign="center">
+              <Image src="/logox.png" alt="logo" /> Open Trades.
+            </Header>
+            <Table celled>
+              <TableHeader>
+                <TableRow>
+                  <TableHeaderCell>ProcessId</TableHeaderCell>
+                  <TableHeaderCell>Asset Name</TableHeaderCell>
+                  <TableHeaderCell>Asset Price</TableHeaderCell>
+                  <TableHeaderCell>Contract Type</TableHeaderCell>
+                  <TableHeaderCell>Trade Amount</TableHeaderCell>
+                  <TableHeaderCell>Created Time</TableHeaderCell>
+                  <TableHeaderCell>Contract Expiry</TableHeaderCell>
+                  <TableHeaderCell>Contract Status</TableHeaderCell>
+                  <TableHeaderCell>Closing Time</TableHeaderCell>
+                  <TableHeaderCell>
+                    Real world Data Powered by Orbitco
+                    <Image src="/orbit.png" />
+                  </TableHeaderCell>
+                  <TableHeaderCell>Payout</TableHeaderCell>
+                  <TableHeaderCell>Outcome</TableHeaderCell>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {opentrades.map((trade, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{trade.UserId}</TableCell>
+                    <TableCell>{trade.Name}</TableCell>
+                    <TableCell>{trade.AssetPrice}</TableCell>
+                    <TableCell>{trade.ContractType}</TableCell>
+                    <TableCell>{trade.BetAmount}</TableCell>
+                    <TableCell>{trade.CreatedTime}</TableCell>
+                    <TableCell> {trade.ContractExpiry}</TableCell>
+                    <TableCell>{trade.ContractStatus}</TableCell>
+                    <TableCell>{trade.ClosingTime}</TableCell>
+                    <TableCell>{trade.ClosingPrice}</TableCell>
+                    <TableCell>{trade.Payout}</TableCell>
+                    <TableCell>{trade.Outcome}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Segment>
+        </Grid.Column>
+      </Grid.Row>
+      <Divider />
+      <Grid.Row>
+        <Grid.Column width={16}>
+          <Segment raised style={{ overflowX: "auto", maxWidth: "100%" }}>
+            <Header as="h2" color="teal" textAlign="center">
+              <Image src="/logox.png" alt="logo" /> Closed Trades.
+            </Header>
+            <Table celled>
+              <TableHeader>
+                <TableRow>
+                  <TableHeaderCell>ProcessId</TableHeaderCell>
+                  <TableHeaderCell>Asset Name</TableHeaderCell>
+                  <TableHeaderCell>Asset Price</TableHeaderCell>
+                  <TableHeaderCell>Contract Type</TableHeaderCell>
+                  <TableHeaderCell>Trade Amount</TableHeaderCell>
+                  <TableHeaderCell>Created Time</TableHeaderCell>
+                  <TableHeaderCell>Contract Expiry</TableHeaderCell>
+                  <TableHeaderCell>Contract Status</TableHeaderCell>
+                  <TableHeaderCell>Closing Time</TableHeaderCell>
+                  <TableHeaderCell>
+                    Real-World Data Powered by Orbitco
+                    <Image src="/orbit.png" />
+                  </TableHeaderCell>
+                  <TableHeaderCell>Payout</TableHeaderCell>
+                  <TableHeaderCell>Outcome</TableHeaderCell>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {closedtrades.map((trade, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{trade.UserId}</TableCell>
+                    <TableCell>{trade.Name}</TableCell>
+                    <TableCell>{trade.AssetPrice}</TableCell>
+                    <TableCell>{trade.ContractType}</TableCell>
+                    <TableCell>{trade.BetAmount}</TableCell>
+                    <TableCell>{trade.CreatedTime}</TableCell>
+                    <TableCell>{trade.ContractExpiry}</TableCell>
+                    <TableCell>{trade.ContractStatus}</TableCell>
+                    <TableCell>{trade.ClosingTime}</TableCell>
+                    <TableCell>{trade.ClosingPrice}</TableCell>
+                    <TableCell>{trade.Payout}</TableCell>
+                    <TableCell>{trade.Outcome}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Segment>
+        </Grid.Column>
+      </Grid.Row>
       <Divider />
       <Menu>
         <MenuItem href="https://notus-memeframe.vercel.app/" header>

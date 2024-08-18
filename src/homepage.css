@@ -1,49 +1,56 @@
-.matrix-bg {
-  background-color: black;
-  color: #00ff00;
-  font-family: "Courier New", Courier, monospace;
-  background-image: url("matrix-bg.gif"); /* Add a Matrix code effect image */
+.homepage-container {
+  background-color: #0a0a0a;
+  color: #fff;
+  font-family: "Roboto", sans-serif;
+  min-height: 100vh;
+}
+
+.hero-section {
+  background-image: url("hero-image.jpg");
   background-size: cover;
+  background-position: center;
+  padding: 100px 50px;
+  text-align: center;
+  color: white;
 }
 
-.matrix-divider {
-  border-color: #00ff00;
+.hero-title {
+  font-size: 3rem;
+  font-family: "Orbitron", sans-serif;
+  text-shadow: 0 0 10px #00e5ff, 0 0 20px #00e5ff;
 }
 
-.matrix-card {
-  background-color: rgba(0, 0, 0, 0.9);
-  border: 1px solid #00ff00;
+.hero-subtitle {
+  font-size: 1.5rem;
+  font-family: "Roboto Mono", monospace;
+  text-shadow: 0 0 5px #00e5ff;
 }
 
-.matrix-header {
-  color: #00ff00;
-  text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00;
-}
-
-.matrix-meta,
-.matrix-description {
-  color: #00ff00;
-}
-
-.matrix-icon {
-  color: #00ff00;
-}
-
-.matrix-button {
-  background-color: #00ff00;
-  color: black;
-}
-
-.matrix-button:hover {
-  background-color: #009900;
-  color: black;
-}
-
-.matrix-menu {
-  background-color: black;
+.custom-card {
+  background-color: #1a1a1a;
   border: none;
+  box-shadow: 0 0 10px #00e5ff, 0 0 20px #00e5ff;
 }
 
-.matrix-menu-item {
-  color: #00ff00 !important;
+.card-title {
+  color: #00e5ff;
+  font-family: "Orbitron", sans-serif;
+}
+
+.card-meta {
+  color: #00e5ff;
+  font-family: "Roboto Mono", monospace;
+}
+
+.neon-button {
+  background-color: #00e5ff !important;
+  color: #000 !important;
+  text-shadow: none !important;
+  box-shadow: 0 0 10px #00e5ff, 0 0 20px #00e5ff;
+}
+
+.neon-text {
+  color: #00e5ff !important;
+  font-family: "Orbitron", sans-serif;
+  text-shadow: 0 0 5px #00e5ff;
 }

@@ -43,21 +43,18 @@ function Navbar() {
       console.error(error);
     }
   };
-  const navigate = useNavigate();
-
-  const home = () => {
-    navigate("/HomePage");
-  };
 
   return (
     <Container>
+      <Header as="h2" dividing>
+        Notus.
+      </Header>
+
       <Grid columns={1} doubling>
         <Grid.Column>
           <Menu>
             <Button icon="heart" color="green" />
-            <Button onClick={home} color="green">
-              Home.
-            </Button>
+            <Button color="green"> Notus Options </Button>
 
             <MenuMenu position="right">
               {address ? (

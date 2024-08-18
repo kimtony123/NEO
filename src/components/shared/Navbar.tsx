@@ -46,13 +46,15 @@ function Navbar() {
 
   return (
     <Container>
+      <Header as="h2" dividing>
+        Notus.
+      </Header>
+
       <Grid columns={1} doubling>
         <Grid.Column>
           <Menu>
-            <Button icon="sun" color="green" />
-            <Button src="/" color="green">
-              Home.
-            </Button>
+            <Button icon="heart" color="green" />
+            <Button color="green"> Notus Options </Button>
 
             <MenuMenu position="right">
               {address ? (
