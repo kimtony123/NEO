@@ -43,7 +43,7 @@ const useCronTickA = (process: string) => {
       }
     };
 
-    const intervalId = setInterval(fetchPrice, 100000); // Every minute and 5 seconds
+    const intervalId = setInterval(fetchPrice, 120000); // Every minute and 5 seconds
 
     return () => clearInterval(intervalId);
   }, [process]);
@@ -62,7 +62,7 @@ const useCronTickA = (process: string) => {
       }
     };
 
-    const intervalId = setInterval(closePositions, 100000); // Every minute and 15 seconds
+    const intervalId = setInterval(closePositions, 130000); // Every minute and 15 seconds
 
     return () => clearInterval(intervalId);
   }, [process]);
