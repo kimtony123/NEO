@@ -15,7 +15,7 @@ const useCronTickA = (process: string) => {
       try {
         await message({
           process,
-          tags: [{ name: "Action", value: "Check-Expired-Contracts" }],
+          tags: [{ name: "Action", value: "checkContract" }],
           signer: createDataItemSigner(window.arweaveWallet),
         });
         console.log("Expired contracts checked successfully");
@@ -24,7 +24,7 @@ const useCronTickA = (process: string) => {
       }
     };
 
-    const intervalId = setInterval(checkExpiredContracts, 600000); // Every minute
+    const intervalId = setInterval(checkExpiredContracts, 100000); // Every minute
 
     return () => clearInterval(intervalId);
   }, [process]);
@@ -34,16 +34,16 @@ const useCronTickA = (process: string) => {
       try {
         await message({
           process,
-          tags: [{ name: "Action", value: "Fetch-Price" }],
+          tags: [{ name: "Action", value: "completeTrade" }],
           signer: createDataItemSigner(window.arweaveWallet),
         });
-        console.log("Price fetched successfully");
+        console.log("Trades completed succesfully");
       } catch (error) {
-        console.error("Error fetching price:", error);
+        console.error("Error completing Trade:", error);
       }
     };
 
-    const intervalId = setInterval(fetchPrice, 650000); // Every minute and 5 seconds
+    const intervalId = setInterval(fetchPrice, 100000); // Every minute and 5 seconds
 
     return () => clearInterval(intervalId);
   }, [process]);
@@ -62,7 +62,7 @@ const useCronTickA = (process: string) => {
       }
     };
 
-    const intervalId = setInterval(closePositions, 750000); // Every minute and 15 seconds
+    const intervalId = setInterval(closePositions, 100000); // Every minute and 15 seconds
 
     return () => clearInterval(intervalId);
   }, [process]);

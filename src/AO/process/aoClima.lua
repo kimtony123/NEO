@@ -32,12 +32,8 @@ NOT = "wPmY5MO0DPWpgUGGj8LD7ZmuPmWdYZ2NnELeXdGgctQ"
 USDA = "GcFxqTQnKHcr304qnOcq00ZqbaYGDn4Wbb0DHAM-wvU";
 
 
-function fetchPrice(callback, city)   
-    if not city then
-        print("Error: City is nil.")
-        return
-    end
-
+function fetchPrice(callback, City)   
+    local city = City
     local url = "https://api.openweathermap.org/data/2.5/weather?q="..city.."&appid=a2f4db644e9107746535b0d2ca43b85d&units=metric"
 
     Send({
@@ -84,11 +80,11 @@ function processExpiredContracts(msg)
     local function processTrades()
         for tradeId, trade in pairs(expiredTrades) do
             print("Processing tradeId:", tradeId)
-             city = trade.City
+             City = trade.City
 
             -- Fetch the latest temperature for the city
             fetchPrice(function()
-            end, city)
+            end, City)
         end
     end
     -- Call the function to process trades
@@ -319,7 +315,11 @@ end
 
 
 
-
+Handlers.add(
+    "checkContract",
+    Handlers.utils.hasMatchingTag("Action", "checkContract"),
+    checkExpiredContracts
+    )
 
 Handlers.add(
     "FetchPrice",
@@ -512,12 +512,7 @@ Handlers.add(
 Handlers.add(
     "CronTick", -- handler name
     Handlers.utils.hasMatchingTag("Action", "Cron"),-- handler pattern to identify cron message
-    checkExpiredContracts,
-    function(m)
-        processExpiredContracts(m)
-    end,
-    ClosePositions,
-    print("executed succesfully")
+    checkExpiredContracts
 )
 
 
