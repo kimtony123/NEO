@@ -15,7 +15,7 @@ const useCronTickA = (process: string) => {
       try {
         await message({
           process,
-          tags: [{ name: "Action", value: "checkContract" }],
+          tags: [{ name: "Action", value: "Cron" }],
           signer: createDataItemSigner(window.arweaveWallet),
         });
         console.log("Expired contracts checked successfully");
